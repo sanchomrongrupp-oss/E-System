@@ -1,10 +1,13 @@
 package com.example.e_system
 
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.os.Bundle
 import android.text.InputType
+import android.view.View
 import android.widget.EditText
 import android.widget.ImageView
+import android.widget.LinearLayout
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 class signin : AppCompatActivity() {
@@ -38,6 +41,11 @@ class signin : AppCompatActivity() {
             // Keep cursor at the end
             passwordEditText.setSelection(passwordEditText.text.length)
         }
+        val btnloginhomepage = findViewById<LinearLayout?>(R.id.btnlogin)
+        btnloginhomepage?.setOnClickListener(View.OnClickListener { v: View? ->
+            val intent = Intent(this@signin, home_page::class.java)
+            startActivity(intent)
+        })
 
     }
 }

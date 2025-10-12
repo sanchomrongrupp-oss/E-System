@@ -7,5 +7,10 @@
     <string name="next">Next</string>
     <string name="previous">Previous</string>
     <string name="next_button_description">Next intro screen</string>
+    <string name="profile_image">Profile Image</string>
+    <string name="signal_image">Signal Image</string>
+    <string name="notification_image">Notification Image</string>
+    <string name="search_image">Search Image</string>
+
 
 </resources>

@@ -103,5 +103,45 @@
         app:layout_constraintHorizontal_bias="0.95"
         tools:ignore="HardcodedText" />
 
+    <LinearLayout
+        android:id="@+id/btnlogin"
+        android:layout_width="360dp"
+        android:layout_height="60dp"
+        android:background="@drawable/rounded_view"
+        android:clickable="true"
+        android:focusable="true"
+        android:foreground="?attr/selectableItemBackground"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:paddingHorizontal="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.509"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/passwordInput"
+        app:layout_constraintVertical_bias="0.362">
+
+        <!-- Text -->
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:paddingLeft="25dp"
+            android:text="Log in"
+            android:textColor="@android:color/white"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            tools:ignore="HardcodedText,RtlHardcoded,RtlSymmetry" />
+
+        <!-- PNG Arrow Image -->
+        <ImageView
+            android:layout_width="55dp"
+            android:layout_height="55dp"
+            android:contentDescription="@string/next_button_description"
+            android:scaleType="fitCenter"
+            android:src="@drawable/arrow_start" />
+    </LinearLayout>
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>
