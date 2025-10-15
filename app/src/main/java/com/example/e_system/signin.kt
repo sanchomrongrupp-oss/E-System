@@ -43,7 +43,7 @@ class signin : AppCompatActivity() {
         }
         val btnloginhomepage = findViewById<LinearLayout?>(R.id.btnlogin)
         btnloginhomepage?.setOnClickListener(View.OnClickListener { v: View? ->
-            val intent = Intent(this@signin, home_page::class.java)
+            val intent = Intent(this@signin, MainActivity::class.java)
             startActivity(intent)
         })
 
