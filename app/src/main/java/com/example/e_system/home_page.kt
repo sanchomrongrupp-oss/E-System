@@ -3,7 +3,6 @@ package com.example.e_system
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import com.google.android.material.bottomnavigation.BottomNavigationView
 
 class home_page : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

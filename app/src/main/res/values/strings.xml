@@ -1,16 +1,12 @@
 <resources>
     <string name="app_name">E-System</string>
     <string name="action_settings">Settings</string>
-    <!-- Strings used for fragments for navigation -->
-    <string name="first_fragment_label">First Fragment</string>
     <string name="second_fragment_label">Second Fragment</string>
-    <string name="next">Next</string>
-    <string name="previous">Previous</string>
     <string name="next_button_description">Next intro screen</string>
     <string name="profile_image">Profile Image</string>
-    <string name="signal_image">Signal Image</string>
     <string name="notification_image">Notification Image</string>
     <string name="search_image">Search Image</string>
+    <string name="menu_image">Menu Image</string>
 
 
 </resources>

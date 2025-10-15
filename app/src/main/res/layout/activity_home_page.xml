@@ -55,11 +55,11 @@
 
     <ImageView
         android:id="@+id/btnChart"
-        android:layout_width="30dp"
-        android:layout_height="30dp"
+        android:layout_width="25dp"
+        android:layout_height="25dp"
         android:layout_marginEnd="16dp"
         android:contentDescription="Siganl Image"
-        android:src="@drawable/chatbot"
+        android:src="@drawable/notifications"
         android:tint="#5F6368"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -69,8 +69,8 @@
 
     <ImageView
         android:id="@+id/btnSearch"
-        android:layout_width="30dp"
-        android:layout_height="30dp"
+        android:layout_width="25dp"
+        android:layout_height="25dp"
         android:layout_marginEnd="20dp"
         android:contentDescription="Search Image"
         android:src="@drawable/search"
@@ -95,19 +95,78 @@
         app:layout_constraintTop_toBottomOf="@id/profileImage"
         app:layout_constraintVertical_bias="0.030" />
 
-    <ListView
-        android:id="@+id/view"
+<!--    <ListView-->
+<!--        android:id="@+id/listview"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:layout_marginStart="16dp"-->
+<!--        android:layout_marginEnd="16dp"-->
+<!--        android:background="@drawable/view_listyear"-->
+<!--        app:layout_constraintTop_toBottomOf="@id/viewhot"-->
+<!--        app:layout_constraintLeft_toLeftOf="parent"-->
+<!--        app:layout_constraintRight_toRightOf="parent"-->
+<!--        app:layout_constraintBottom_toBottomOf="parent"-->
+<!--        app:layout_constraintVertical_bias="0.2"-->
+<!--        android:entries="@array/MajorName"/>-->
+
+    <ScrollView
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
         android:layout_width="match_parent"
-        android:layout_height="324dp"
+        android:layout_height="0dp"
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"
-        android:dividerHeight="1dp"
+        android:layout_marginTop="5dp"
         android:background="@drawable/view_listyear"
         app:layout_constraintTop_toBottomOf="@id/viewhot"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintVertical_bias="0.2" />
+        app:layout_constraintVertical_bias="0.2">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="8dp">
+
+            <!-- Header Text -->
+            <TextView
+                android:id="@+id/tilleyear"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Year 4"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:padding="4dp" />
+
+            <TextView
+                android:id="@+id/tillsemester"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Semester 2"
+                android:textSize="15sp"
+                android:paddingStart="4dp"
+                android:paddingBottom="8dp" />
+
+            <!-- Horizontal container for 3 FrameLayouts -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center">
+
+                <!-- Reusable Frame Item -->
+                <include layout="@layout/item_major" />
+
+                <include layout="@layout/item_major" />
+
+                <include layout="@layout/item_major" />
+            </LinearLayout>
+
+        </LinearLayout>
+    </ScrollView>
+
 
 
     <com.google.android.material.bottomnavigation.BottomNavigationView
@@ -122,4 +181,5 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toBottomOf="parent">
     </com.google.android.material.bottomnavigation.BottomNavigationView>
+
 </androidx.constraintlayout.widget.ConstraintLayout>
