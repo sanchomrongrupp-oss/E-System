@@ -1,0 +1,46 @@
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="117dp"
+    android:layout_height="130dp"
+    android:layout_marginTop="8dp"
+    android:layout_marginBottom="8dp"
+    android:background="@drawable/radius_present">
+
+    <ImageView
+        android:id="@+id/image_subject"
+        android:layout_width="45dp"
+        android:layout_height="45dp"
+        android:background="@drawable/cicle_back"
+        android:gravity="center"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:adjustViewBounds="true"
+        android:src="@drawable/present"
+        android:scaleType="centerInside"
+        android:clipToOutline="true"/>
+
+    <TextView
+        android:id="@+id/num_present"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:gravity="start"
+        android:layout_marginStart="8dp"
+        android:layout_marginBottom="32dp"
+        android:textColor="@color/white"
+        android:text="10"
+        android:textSize="18sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/title_present"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:gravity="start"
+        android:layout_marginStart="8dp"
+        android:layout_marginBottom="8dp"
+        android:textColor="@color/white"
+        android:text="Present"
+        android:textSize="18sp"
+        android:textStyle="bold" />
+</FrameLayout>
