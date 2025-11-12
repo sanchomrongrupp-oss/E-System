@@ -8,7 +8,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
@@ -20,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -31,8 +31,16 @@ class IntroThirdActivity : ComponentActivity() {
         setContent {
             ESystemTheme {
                 IntroThirdScreen(
-                    onSkip = { startActivity(Intent(this, MainActivity::class.java)) },
-                    onNext = { startActivity(Intent(this, MainActivity::class.java)) }
+                    onSkip = {
+                        // ✅ Go directly to main activity
+                        startActivity(Intent(this, SigInActivity::class.java))
+                        finish() // prevent going back
+                    },
+                    onNext = {
+                        // ✅ Go to SigInActivity
+                        startActivity(Intent(this, SigInActivity::class.java))
+                        finish()
+                    }
                 )
             }
         }
@@ -44,84 +52,88 @@ fun IntroThirdScreen(onSkip: () -> Unit, onNext: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 24.dp),
+            .padding(horizontal = 24.dp)
     ) {
-
-        // Skip button
+        // Skip Button
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 52.dp),
+                .padding(top = 16.dp),
             horizontalArrangement = Arrangement.End
         ) {
             Text(
                 text = "Skip",
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
+                color = Color(0xFF2D4B65),
                 modifier = Modifier.clickable { onSkip() }
             )
         }
-        Spacer(modifier = Modifier.height(80.dp))
 
-        Image(
-            painter = painterResource(id = R.drawable.rupp_logo),
-            contentDescription = "Logo",
-            modifier = Modifier
-                .size(200.dp)
-                .align(Alignment.CenterHorizontally)  // <-- Center the Image
-        )
+        Spacer(modifier = Modifier.weight(1f))
 
+        // Logo
+        Box(
+            modifier = Modifier.fillMaxWidth(),
+            contentAlignment = Alignment.Center
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.rupp_logo),
+                contentDescription = "Logo",
+                modifier = Modifier
+                    .fillMaxWidth(0.5f)
+                    .aspectRatio(1f)
+            )
+        }
 
-        Spacer(modifier = Modifier.height(80.dp))
+        Spacer(modifier = Modifier.weight(1f))
 
-        // Title
-        Text(
-            text = "សិក្សារតាមអ៊ីនធឺណិត",
-            fontSize = 28.sp,
-            color = Color(0xFF2D4B65),
-            modifier = Modifier.align(Alignment.CenterHorizontally)
-        )
+        // Title & Description
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = "សិក្សារតាមអ៊ីនធឺណិត",
+                fontSize = 28.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF2D4B65),
+                textAlign = TextAlign.Center
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                text = "វិភាគពិន្ទុរបស់អ្នក និងតាមដានលទ្ធផលរបស់អ្នក។",
+                fontSize = 18.sp,
+                color = Color(0xFF545454),
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
+        }
 
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.weight(1f))
 
-        // Description
-        Text(
-            text = "វិភាគពិន្ទុរបស់អ្នក និងតាមដានលទ្ធផលរបស់អ្នក",
-            fontSize = 18.sp,
-            color = Color(0xFF545454),
-            modifier = Modifier.align(Alignment.CenterHorizontally)
-        )
-
-        Spacer(modifier = Modifier.height(234.dp))
-
-// Indicators (SECOND SELECTED)
+        // Bottom Indicators + Start Button
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 0.dp),
+                .padding(bottom = 32.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Indicators
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(
                     modifier = Modifier
                         .size(10.dp)
                         .background(Color(0xFFD5E2F5), RoundedCornerShape(20.dp))
                 )
-
                 Spacer(modifier = Modifier.width(8.dp))
-
                 Box(
                     modifier = Modifier
                         .size(10.dp)
                         .background(Color(0xFFD5E2F5), CircleShape)
                 )
-
                 Spacer(modifier = Modifier.width(8.dp))
-
                 Box(
                     modifier = Modifier
                         .width(20.dp)
@@ -130,32 +142,30 @@ fun IntroThirdScreen(onSkip: () -> Unit, onNext: () -> Unit) {
                 )
             }
 
-            // Next button
+            // Start Button
             Button(
                 onClick = { onNext() },
-                colors = ButtonDefaults.buttonColors(Color(0xFF2D4B65)),
-                shape = CircleShape,
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2D4B65)),
+                shape = RoundedCornerShape(50.dp),
                 modifier = Modifier
-                    .height(70.dp)
-                    .width(200.dp)
+                    .height(60.dp)
+                    .width(180.dp)
             ) {
                 Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-                ){
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
                     Text(
-                    "Stsrt",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
+                        text = "Start",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
                     )
+                    Spacer(modifier = Modifier.width(8.dp))
                     Image(
-                        painter = painterResource(id = R.drawable.arrow_start),
-                        contentDescription = "Next",
-                        modifier = Modifier
-                            .size(60.dp)
-                            .padding(start = 10.dp)
+                        painter = painterResource(id = R.drawable.right_arrow),
+                        contentDescription = "Start Arrow",
+                        modifier = Modifier.size(24.dp)
                     )
                 }
             }
@@ -163,13 +173,10 @@ fun IntroThirdScreen(onSkip: () -> Unit, onNext: () -> Unit) {
     }
 }
 
-@Preview(showBackground = true)
+@Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun PreviewIntroThirdScreen() {
     ESystemTheme {
-        IntroThirdScreen(
-            onSkip = {},
-            onNext = {}
-        )
+        IntroThirdScreen(onSkip = {}, onNext = {})
     }
 }

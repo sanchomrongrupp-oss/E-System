@@ -8,7 +8,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
@@ -20,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -31,7 +31,7 @@ class IntroSecondActivity : ComponentActivity() {
         setContent {
             ESystemTheme {
                 IntroSecondScreen(
-                    onSkip = { startActivity(Intent(this, MainActivity::class.java)) },
+                    onSkip = { startActivity(Intent(this, SigInActivity::class.java)) },
                     onNext = { startActivity(Intent(this, IntroThirdActivity::class.java)) }
                 )
             }
@@ -44,14 +44,13 @@ fun IntroSecondScreen(onSkip: () -> Unit, onNext: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 24.dp),
+            .padding(horizontal = 24.dp)
     ) {
-
-        // Skip button
+        // Skip Button
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 52.dp),
+                .padding(top = 16.dp),
             horizontalArrangement = Arrangement.End
         ) {
             Text(
@@ -61,68 +60,72 @@ fun IntroSecondScreen(onSkip: () -> Unit, onNext: () -> Unit) {
                 modifier = Modifier.clickable { onSkip() }
             )
         }
-        Spacer(modifier = Modifier.height(80.dp))
 
-        Image(
-            painter = painterResource(id = R.drawable.rupp_logo),
-            contentDescription = "Logo",
-            modifier = Modifier
-                .size(200.dp)
-                .align(Alignment.CenterHorizontally)  // <-- Center the Image
-        )
+        Spacer(modifier = Modifier.weight(1f))
 
+        // Logo
+        Box(
+            modifier = Modifier.fillMaxWidth(),
+            contentAlignment = Alignment.Center
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.rupp_logo),
+                contentDescription = "Logo",
+                modifier = Modifier
+                    .fillMaxWidth(0.5f)
+                    .aspectRatio(1f)
+            )
+        }
 
-        Spacer(modifier = Modifier.height(80.dp))
+        Spacer(modifier = Modifier.weight(1f))
 
-        // Title
-        Text(
-            text = "រៀនគ្រប់ពេលវេលា",
-            fontSize = 28.sp,
-            color = Color(0xFF2D4B65),
-            modifier = Modifier.align(Alignment.CenterHorizontally)
-        )
+        // Title & Description
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = "រៀនគ្រប់ពេលវេលា",
+                fontSize = 28.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF2D4B65),
+                textAlign = TextAlign.Center
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                text = "បានកត់ទុក ឬដូចគ្នាទៅនឹងការបង្រៀនផ្ទាល់",
+                fontSize = 18.sp,
+                color = Color(0xFF545454),
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
+        }
 
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.weight(1f))
 
-        // Description
-        Text(
-            text = "បានកត់ទុក ឬដូចគ្នាទៅនឹងការបង្រៀនផ្ទាល់",
-            fontSize = 18.sp,
-            color = Color(0xFF545454),
-            modifier = Modifier.align(Alignment.CenterHorizontally)
-        )
-
-        Spacer(modifier = Modifier.height(234.dp))
-
-// Indicators (SECOND SELECTED)
+        // Bottom Indicators + Next Button
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 0.dp),
+                .padding(bottom = 32.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Indicators
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(
                     modifier = Modifier
                         .size(10.dp)
                         .background(Color(0xFFD5E2F5), RoundedCornerShape(20.dp))
                 )
-
                 Spacer(modifier = Modifier.width(8.dp))
-
                 Box(
                     modifier = Modifier
                         .width(20.dp)
                         .height(10.dp)
                         .background(Color(0xFF2D4B65), CircleShape)
                 )
-
                 Spacer(modifier = Modifier.width(8.dp))
-
                 Box(
                     modifier = Modifier
                         .size(10.dp)
@@ -130,7 +133,7 @@ fun IntroSecondScreen(onSkip: () -> Unit, onNext: () -> Unit) {
                 )
             }
 
-            // Next button
+            // Next Button
             Button(
                 onClick = { onNext() },
                 colors = ButtonDefaults.buttonColors(Color(0xFF2D4B65)),
@@ -151,9 +154,6 @@ fun IntroSecondScreen(onSkip: () -> Unit, onNext: () -> Unit) {
 @Composable
 fun PreviewIntroSecondScreen() {
     ESystemTheme {
-        IntroSecondScreen(
-            onSkip = {},
-            onNext = {}
-        )
+        IntroSecondScreen(onSkip = {}, onNext = {})
     }
 }

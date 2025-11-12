@@ -1,20 +1,29 @@
 <resources>
+    <!-- App Name -->
     <string name="app_name">E-System</string>
+
+    <!-- General -->
     <string name="action_settings">Settings</string>
-    <string name="second_fragment_label">Second Fragment</string>
     <string name="next_button_description">Next intro screen</string>
     <string name="profile_image">Profile Image</string>
     <string name="notification_image">Notification Image</string>
     <string name="search_image">Search Image</string>
     <string name="menu_image">Menu Image</string>
-    <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
-    <string name="title_activity_splash_page">splash_page</string>
-    <string name="title_activity_intro_first">IntroFirstActivity</string>
-    <string name="title_activity_introl_second">IntrolSecondActivity</string>
-    <string name="title_activity_intro_third">IntroThirdActivity</string>
-    <string name="title_activity_signin">SigninActivity</string>
-    <string name="title_activity_home">HomeActivity</string>
-    <string name="title_activity_exercise">ExerciseActivity</string>
-    <string name="title_activity_attendance">AttendanceActivity</string>
+
+    <!-- Activity Titles -->
+    <string name="title_activity_splash">Splash Activity</string>
+    <string name="title_activity_intro_first">Intro First</string>
+    <string name="title_activity_intro_second">Intro Second</string>
+    <string name="title_activity_intro_third">Intro Third</string>
+    <string name="title_activity_sign_in">Sign In</string>
+    <string name="title_activity_home">Home</string>
+    <string name="title_activity_exercise">Exercise</string>
+    <string name="title_activity_attendance">Attendance</string>
+    <string name="title_activity_profile">Profile</string>
+    <string name="title_activity_notification">Notification</string>
+    <string name="title_activity_search">Search</string>
+    <string name="title_activity_menu">Menu</string>
+    <string name="title_activity_main">Main Activity</string>
+
 </resources>
