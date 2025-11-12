@@ -31,8 +31,16 @@ class IntroFirstActivity : ComponentActivity() {
         setContent {
             ESystemTheme {
                 IntroFirstScreen(
-                    onSkip = { startActivity(Intent(this, MainActivity::class.java)) },
-                    onNext = { startActivity(Intent(this, IntroSecondActivity::class.java)) }
+                    onSkip = {
+                        // ✅ Go directly to main activity
+                        startActivity(Intent(this, SigInActivity::class.java))
+                        finish() // finish to prevent going back
+                    },
+                    onNext = {
+                        // ✅ Go to next intro page
+                        startActivity(Intent(this, IntroSecondActivity::class.java))
+                        finish()
+                    }
                 )
             }
         }
@@ -44,62 +52,71 @@ fun IntroFirstScreen(onSkip: () -> Unit, onNext: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 24.dp),
+            .padding(horizontal = 24.dp)
     ) {
-        // Skip button
+        // Skip Button (top-right)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 52.dp),
+                .padding(top = 16.dp),
             horizontalArrangement = Arrangement.End
         ) {
             Text(
                 text = "Skip",
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
+                color = Color(0xFF2D4B65),
                 modifier = Modifier.clickable { onSkip() }
             )
         }
 
-        Spacer(modifier = Modifier.height(80.dp))
+        Spacer(modifier = Modifier.weight(1f))
 
-        // Centered Logo
-        Image(
-            painter = painterResource(id = R.drawable.rupp_logo),
-            contentDescription = "Logo",
-            modifier = Modifier
-                .size(200.dp)
-                .align(Alignment.CenterHorizontally)
-        )
+        // Logo section
+        Box(
+            modifier = Modifier.fillMaxWidth(),
+            contentAlignment = Alignment.Center
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.rupp_logo),
+                contentDescription = "Logo",
+                modifier = Modifier
+                    .fillMaxWidth(0.5f)
+                    .aspectRatio(1f)
+            )
+        }
 
-        Spacer(modifier = Modifier.height(80.dp))
+        Spacer(modifier = Modifier.weight(1f))
 
-        // Title
-        Text(
-            text = "ការរៀនតាមអ៊ីនធឺណិត",
-            fontSize = 28.sp,
-            color = Color(0xFF2D4B65),
-            textAlign = TextAlign.Center,
-            modifier = Modifier.align(Alignment.CenterHorizontally)
-        )
+        // Title & Description
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = "ការរៀនតាមអ៊ីនធឺណិត",
+                fontSize = 28.sp,
+                color = Color(0xFF2D4B65),
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                text = "យើងផ្តល់ជូនថ្នាក់រៀនអនឡាញ\nនិងមេរៀនដែលបានកត់ត្រាទុកជាមុន។",
+                fontSize = 18.sp,
+                color = Color(0xFF545454),
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
+        }
 
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.weight(1f))
 
-        // Description
-        Text(
-            text = "យើងផ្តល់ជូនថ្នាក់រៀនអនឡាញ\nនិងមេរៀនដែលបានកត់ត្រាទុកជាមុន។",
-            fontSize = 18.sp,
-            color = Color(0xFF545454),
-            textAlign = TextAlign.Center,
-            modifier = Modifier.align(Alignment.CenterHorizontally)
-        )
-
-        Spacer(modifier = Modifier.height(234.dp))
-
-        // Indicators and Next button
+        // Indicators + Next Button
         Row(
             modifier = Modifier
-                .fillMaxWidth(),
+                .fillMaxWidth()
+                .padding(bottom = 32.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -125,10 +142,10 @@ fun IntroFirstScreen(onSkip: () -> Unit, onNext: () -> Unit) {
                 )
             }
 
-            // Next button
+            // Next Button
             Button(
                 onClick = { onNext() },
-                colors = ButtonDefaults.buttonColors(Color(0xFF2D4B65)),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2D4B65)),
                 shape = CircleShape,
                 modifier = Modifier.size(70.dp)
             ) {
@@ -142,13 +159,10 @@ fun IntroFirstScreen(onSkip: () -> Unit, onNext: () -> Unit) {
     }
 }
 
-@Preview(showBackground = true)
+@Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun PreviewIntroFirstScreen() {
     ESystemTheme {
-        IntroFirstScreen(
-            onSkip = {},
-            onNext = {}
-        )
+        IntroFirstScreen(onSkip = {}, onNext = {})
     }
 }

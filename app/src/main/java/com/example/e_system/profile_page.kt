@@ -13,7 +13,7 @@ class profile_page : AppCompatActivity() {
         setContentView(R.layout.activity_profile_page)
         val btnBack = findViewById<ImageView>(R.id.back_button)
         btnBack.setOnClickListener {
-            val intent = Intent(this, MainActivity::class.java)
+            val intent = Intent(this, SigInActivity::class.java)
             startActivity(intent)
             finish() // optional: closes current activity
         }
