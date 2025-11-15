@@ -1,5 +1,6 @@
 package com.example.e_system
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -13,35 +14,65 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.text.font.FontWeight
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import com.example.e_system.ui.theme.ESystemTheme
 
+class AttendanceActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        setContent {
+            ESystemTheme {
+                AttendanceScreen()
+            }
+        }
+    }
+}
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AttendanceScreen() {
-    var selectedOption by remember { mutableStateOf("Select your major") }
     var expanded by remember { mutableStateOf(false) }
-    val dropdownOptions = listOf(
-        "Mobile System & App",
-        "S.E and IT PM",
-        "Windows Server Admin",
-        "M.I.S",
-        "OOAD and Prog"
-    )
+    var selectedOption by remember { mutableStateOf("Select Semester") }
+    val dropdownOptions = listOf("Semester 1", "Semester 2", "Semester 3")
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
-            .verticalScroll(rememberScrollState())
     ) {
-        // Title
-        Text("Attendance", fontSize = 24.sp, fontWeight = FontWeight.Bold)
-        Spacer(modifier = Modifier.height(16.dp))
 
-        // Dropdown
+        // Top Title Bar
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 40.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .height(75.dp)
+                    .fillMaxWidth(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "Attendance",
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Responsive Dropdown
         ExposedDropdownMenuBox(
             expanded = expanded,
             onExpandedChange = { expanded = !expanded }
@@ -50,11 +81,13 @@ fun AttendanceScreen() {
                 value = selectedOption,
                 onValueChange = {},
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .menuAnchor(), // required for correct positioning
+                    .fillMaxWidth(),
                 readOnly = true,
-                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) }
+                trailingIcon = {
+                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+                }
             )
+
             ExposedDropdownMenu(
                 expanded = expanded,
                 onDismissRequest = { expanded = false }
@@ -71,95 +104,142 @@ fun AttendanceScreen() {
             }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(15.dp))
 
-        // Status Row (Responsive)
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            StatusBox("Present", Color(0xFF4CAF50), R.drawable.present, 10, Modifier.weight(1f))
-            StatusBox("Absent", Color(0xFF700000), R.drawable.absent, 2, Modifier.weight(1f))
-            StatusBox("Permission", Color(0xFF2D4B65), R.drawable.permission, 0, Modifier.weight(1f))
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Attendance Items
-        val attendanceList = listOf(
-            Triple("Tue, 07 Oct", "KHY CHOUER", "P"),
-            Triple("Tue, 05 Oct", "KHY CHOUER", "A"),
-            Triple("Tue, 03 Oct", "KHY CHOUER", "L")
+        Text(
+            text = "Attendance Summary",
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold
         )
 
-        attendanceList.forEach { (date, name, status) ->
-            val color = when (status) {
-                "P" -> Color(0xFF4CAF50)
-                "A" -> Color(0xFF700000)
-                else -> Color(0xFF2D4B65)
-            }
-            AttendanceItem(date, name, status, color)
-            Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // Responsive Status Boxes Row
+        Row(
+            modifier = Modifier
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            StatusBox(
+                label = "Present",
+                color = Color(0xFF4CAF50),
+                imageres = R.drawable.present,
+                count = 10,
+                modifier = Modifier.weight(1f)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            StatusBox(
+                label = "Absent",
+                color = Color(0xFF700000),
+                imageres = R.drawable.absent,
+                count = 2,
+                modifier = Modifier.weight(1f)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            StatusBox(
+                label = "Permission",
+                color = Color(0xFF2D4B65),
+                imageres = R.drawable.permission,
+                count = 0,
+                modifier = Modifier.weight(1f)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(18.dp))
+
+        // Scrollable List Box
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)  // Makes it auto-fill any screen size
+                .background(Color(0xFFECECEC), RoundedCornerShape(8.dp))
+                .padding(10.dp)
+                .verticalScroll(rememberScrollState())
+        ) {
+            AttendanceItem("Tue, 07 Oct", "KHY CHOUER", "P", Color(0xFF4CAF50))
+            AttendanceItem("Tue, 05 Oct", "KHY CHOUER", "A", Color(0xFF700000))
+            AttendanceItem("Tue, 03 Oct", "KHY CHOUER", "L", Color(0xFF2D4B65))
         }
     }
 }
 
 @Composable
-fun StatusBox(label: String, color: Color, imageRes: Int, count: Int, modifier: Modifier = Modifier) {
-    Column(
+fun StatusBox(label: String, color: Color, imageres: Int, count: Int, modifier: Modifier = Modifier) {
+    Box(
         modifier = modifier
-            .aspectRatio(1f) // keeps box square and responsive
-            .clip(RoundedCornerShape(8.dp))
-            .background(color)
-            .padding(8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+            .height(130.dp)
+            .background(color, RoundedCornerShape(10.dp))
+            .padding(12.dp)
     ) {
-        Icon(
-            painter = painterResource(id = imageRes),
-            contentDescription = label,
-            tint = Color.White,
-            modifier = Modifier
-                .fillMaxWidth(0.4f) // responsive icon size
-                .aspectRatio(1f)
-                .clip(CircleShape)
-                .background(Color(0x33000000))
-                .padding(4.dp)
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(label, color = Color.White, fontWeight = FontWeight.Bold)
-        Text("$count", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+
+            Image(
+                painter = painterResource(id = imageres),
+                contentDescription = null,
+                modifier = Modifier
+                    .size(45.dp)
+                    .clip(CircleShape)
+                    .background(Color.White)
+                    .padding(8.dp)
+            )
+
+            Text(
+                text = label,
+                color = Color.White,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold
+            )
+
+            Text(
+                text = "$count",
+                color = Color.White,
+                fontSize = 22.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
     }
 }
 
 @Composable
 fun AttendanceItem(date: String, name: String, status: String, color: Color) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(8.dp))
-            .background(Color.White)
-            .padding(8.dp),
-        verticalAlignment = Alignment.CenterVertically
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp)
     ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(date, fontSize = 14.sp)
-            Text(name, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-        }
-        Box(
+        Text(text = date, fontSize = 16.sp, modifier = Modifier.padding(start = 4.dp))
+        Row(
             modifier = Modifier
-                .weight(0.2f)
-                .aspectRatio(1f)
-                .clip(CircleShape)
-                .background(color),
-            contentAlignment = Alignment.Center
+                .fillMaxWidth()
+                .height(70.dp)
+                .background(Color.White, RoundedCornerShape(8.dp))
+                .padding(horizontal = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(status, color = Color.White, fontWeight = FontWeight.Bold)
+            Text(
+                text = name,
+                modifier = Modifier.weight(1f),
+                fontSize = 17.sp
+            )
+            Box(
+                modifier = Modifier
+                    .size(60.dp)
+                    .background(color, CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = status,
+                    color = Color.White,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
     }
 }
 
-@Preview(showBackground = true, showSystemUi = true)
+@Preview(showBackground = true)
 @Composable
 fun PreviewAttendanceScreen() {
     AttendanceScreen()

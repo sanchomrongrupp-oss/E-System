@@ -21,6 +21,22 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.e_system.ui.theme.ESystemTheme
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import com.example.e_system.ui.theme.ESystemTheme
+
+class ProfileActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        setContent {
+            ESystemTheme {
+                ProfileScreen()
+            }
+        }
+    }
+}
 
 @Composable
 fun ProfileScreen() {

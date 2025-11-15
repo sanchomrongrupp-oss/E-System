@@ -17,7 +17,21 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.e_system.ui.theme.ESystemTheme
 import kotlinx.coroutines.delay
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
 
+class SplashActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        setContent {
+            ESystemTheme {
+                SplashScreen()
+            }
+        }
+    }
+}
 @Composable
 fun SplashScreen() {
     val context = LocalContext.current

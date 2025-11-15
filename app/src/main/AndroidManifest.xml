@@ -12,74 +12,71 @@
             android:supportsRtl="true"
             android:theme="@style/Theme.ESystem"
             tools:targetApi="31">
+
+        <!-- Splash Screen (Launcher) -->
         <activity
-                android:name=".AttendanceActivity"
-                android:exported="false"
-                android:label="@string/title_activity_attendance"
-                android:theme="@style/Theme.ESystem" />
-        <activity
-                android:name=".ExerciseActivity"
-                android:exported="false"
-                android:label="@string/title_activity_exercise"
-                android:theme="@style/Theme.ESystem" />
-        <activity
-                android:name=".HomeActivity"
-                android:exported="false"
-                android:label="@string/title_activity_home"
-                android:theme="@style/Theme.ESystem" />
-        <activity
-                android:name=".SigninActivity"
-                android:exported="false"
-                android:label="@string/title_activity_signin"
-                android:theme="@style/Theme.ESystem" />
-        <activity
-                android:name=".IntroThirdActivity"
-                android:exported="false"
-                android:label="@string/title_activity_intro_third"
-                android:theme="@style/Theme.ESystem" />
-        <activity
-                android:name=".IntrolSecondActivity"
-                android:exported="false"
-                android:label="@string/title_activity_introl_second"
-                android:theme="@style/Theme.ESystem" />
-        <activity
-                android:name=".IntroFirstActivity"
-                android:exported="false"
-                android:label="@string/title_activity_intro_first"
-                android:theme="@style/Theme.ESystem" />
-        <activity
-                android:name=".Splash_page"
-                android:exported="false"
-                android:label="@string/title_activity_splash_page"
-                android:theme="@style/Theme.ESystem" />
-        <activity
-                android:name=".profile_page"
-                android:exported="true" />
-        <activity
-                android:name=".MainActivity"
-                android:exported="true" />
-        <activity
-                android:name=".signin"
-                android:exported="true" />
-        <activity
-                android:name=".introl_three"
-                android:exported="true" />
-        <activity
-                android:name=".introl_second"
-                android:exported="true" />
-        <activity
-                android:name=".introl_first"
-                android:exported="true" />
-        <activity
-                android:name=".splash_screen"
+                android:name=".SplashActivity"
                 android:exported="true"
+                android:label="@string/title_activity_splash"
                 android:theme="@style/Theme.ESystem">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Intro Screens -->
+        <activity
+                android:name=".IntroFirstActivity"
+                android:exported="false"
+                android:label="@string/title_activity_intro_first" />
+
+        <activity
+                android:name=".IntroSecondActivity"
+                android:exported="false"
+                android:label="@string/title_activity_intro_second" />
+
+        <activity
+                android:name=".IntroThirdActivity"
+                android:exported="false"
+                android:label="@string/title_activity_intro_third" />
+
+        <!-- Sign In -->
+        <activity
+                android:name=".SigInActivity"
+                android:exported="false"
+                android:label="@string/title_activity_sign_in" />
+
+        <!-- Home -->
+        <activity
+                android:name=".HomeActivity"
+                android:exported="false"
+                android:label="@string/title_activity_home" />
+
+        <!-- Exercise -->
+        <activity
+                android:name=".ExerciseActivity"
+                android:exported="false"
+                android:label="@string/title_activity_exercise" />
+
+        <!-- Attendance -->
+        <activity
+                android:name=".AttendanceActivity"
+                android:exported="false"
+                android:label="@string/title_activity_attendance" />
+
+        <!-- Profile -->
+        <activity
+                android:name=".ProfileActivity"
+                android:exported="false"
+                android:label="@string/title_activity_profile" />
+
+        <!-- Main Activity -->
+        <activity
+                android:name=".MainActivity"
+                android:exported="true"
+                android:label="@string/title_activity_main" />
+
     </application>
 
 </manifest>

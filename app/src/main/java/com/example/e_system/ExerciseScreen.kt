@@ -12,7 +12,21 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.e_system.ui.theme.ESystemTheme
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
 
+class ExerciseActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        setContent {
+            ESystemTheme {
+                ExerciseScreen()
+            }
+        }
+    }
+}
 @Composable
 fun ExerciseScreen() {
     Column(
