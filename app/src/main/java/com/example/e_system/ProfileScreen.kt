@@ -1,5 +1,6 @@
 package com.example.e_system
 
+import android.content.Intent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -24,22 +25,25 @@ import com.example.e_system.ui.theme.ESystemTheme
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import com.example.e_system.ui.theme.ESystemTheme
 
 class ProfileActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         setContent {
             ESystemTheme {
-                ProfileScreen()
+                ProfileScreen(
+                    onNavigateToHome = {
+                        startActivity(Intent(this, HomeActivity()::class.java))
+                        finish()
+                    }
+                )
             }
         }
     }
 }
 
 @Composable
-fun ProfileScreen() {
+fun ProfileScreen(onNavigateToHome:() -> Unit = {}) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -58,7 +62,7 @@ fun ProfileScreen() {
                 contentDescription = "Back Button",
                 modifier = Modifier
                     .size(24.dp)
-                    .clickable { /* TODO: handle back */ }
+                    .clickable {onNavigateToHome()}
             )
             Spacer(modifier = Modifier.width(16.dp))
             Text(
@@ -184,6 +188,6 @@ fun ProfileOption(
 @Composable
 fun PreviewProfileScreen() {
     ESystemTheme {
-        ProfileScreen()
+        ProfileScreen(onNavigateToHome = {})
     }
 }

@@ -1,6 +1,9 @@
-// HomeScreen.kt
 package com.example.e_system
 
+import android.content.Intent
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -14,32 +17,34 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.e_system.ui.theme.ESystemTheme
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.preview.Preview
 import com.example.e_system.ui.theme.ESystemTheme
 
 class HomeActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         setContent {
             ESystemTheme {
-                HomeScreen { }
+                HomeScreen(
+                    onNavigateToProfile = {
+                        startActivity(Intent(this, ProfileActivity()::class.java))
+                    }
+                )
             }
         }
     }
 }
+
 @Composable
-fun HomeScreen(onNavigateToProfile: () -> Unit) {
+fun HomeScreen(onNavigateToProfile:() -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -53,26 +58,20 @@ fun HomeScreen(onNavigateToProfile: () -> Unit) {
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth()
         ) {
-            // Profile Image inside Box
-            Box(
-                modifier = Modifier
-                    .size(50.dp)
-                    .clip(CircleShape)
-                    .background(Color.Gray)
-                    .clickable { onNavigateToProfile() },
-                contentAlignment = Alignment.Center
-            ) {
+
                 Image(
                     painter = painterResource(id = R.drawable.vanda),
-                    contentDescription = "Profile Image",
+                    contentDescription = "Profile",
                     modifier = Modifier
                         .size(46.dp)
-                        .clip(CircleShape),
+                        .clip(CircleShape)
+                        .clickable { onNavigateToProfile()},
                     contentScale = ContentScale.Crop
                 )
-            }
+
 
             Spacer(modifier = Modifier.width(12.dp))
+
             Column {
                 Text("សួស្ដី · Student", fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 Text("Department Information Technology", fontSize = 12.sp)
@@ -142,8 +141,8 @@ fun CourseYearSemesterDropdown(
     courses: List<Pair<String, Int>>
 ) {
     var expanded by remember { mutableStateOf(false) }
+
     Column(modifier = Modifier.fillMaxWidth()) {
-        // Dropdown Header
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -158,6 +157,7 @@ fun CourseYearSemesterDropdown(
                 Text(year, fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 Text(semester, fontSize = 16.sp, fontWeight = FontWeight.Medium)
             }
+
             Icon(
                 painter = painterResource(id = if (expanded) R.drawable.arrow_up else R.drawable.drop_down),
                 contentDescription = "Expand",
@@ -165,7 +165,6 @@ fun CourseYearSemesterDropdown(
             )
         }
 
-        // Expanded Items
         if (expanded) {
             Spacer(modifier = Modifier.height(8.dp))
             courses.chunked(3).forEach { rowCourses ->

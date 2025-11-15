@@ -28,47 +28,47 @@
         <!-- Intro Screens -->
         <activity
                 android:name=".IntroFirstActivity"
-                android:exported="false"
+                android:exported="true"
                 android:label="@string/title_activity_intro_first" />
 
         <activity
                 android:name=".IntroSecondActivity"
-                android:exported="false"
+                android:exported="true"
                 android:label="@string/title_activity_intro_second" />
 
         <activity
                 android:name=".IntroThirdActivity"
-                android:exported="false"
+                android:exported="true"
                 android:label="@string/title_activity_intro_third" />
 
         <!-- Sign In -->
         <activity
                 android:name=".SigInActivity"
-                android:exported="false"
+                android:exported="true"
                 android:label="@string/title_activity_sign_in" />
 
         <!-- Home -->
         <activity
                 android:name=".HomeActivity"
-                android:exported="false"
+                android:exported="true"
                 android:label="@string/title_activity_home" />
 
         <!-- Exercise -->
         <activity
                 android:name=".ExerciseActivity"
-                android:exported="false"
+                android:exported="true"
                 android:label="@string/title_activity_exercise" />
 
         <!-- Attendance -->
         <activity
                 android:name=".AttendanceActivity"
-                android:exported="false"
+                android:exported="true"
                 android:label="@string/title_activity_attendance" />
 
         <!-- Profile -->
         <activity
                 android:name=".ProfileActivity"
-                android:exported="false"
+                android:exported="true"
                 android:label="@string/title_activity_profile" />
 
         <!-- Main Activity -->

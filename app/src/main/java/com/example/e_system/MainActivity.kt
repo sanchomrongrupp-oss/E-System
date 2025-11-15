@@ -24,6 +24,7 @@ sealed class Screen(val route: String, val title: String) {
     object Home : Screen("home", "Home")
     object Exercise : Screen("exercise", "Exercise")
     object Attendance : Screen("attendance", "Attendance")
+    object Profile : Screen("profile","Profile")
 }
 
 class MainActivity : ComponentActivity() {
@@ -52,9 +53,22 @@ fun MainScreen(navController: NavHostController) {
                 startDestination = Screen.Home.route,
                 modifier = Modifier.padding(innerPadding)
             ) {
-                composable(Screen.Home.route) { HomeScreen {}}
+                composable(Screen.Home.route) {
+                    HomeScreen (
+                        onNavigateToProfile = {
+                            navController.navigate(Screen.Profile.route)
+                        }
+                    )
+                }
                 composable(Screen.Exercise.route) { ExerciseScreen() }
                 composable(Screen.Attendance.route) { AttendanceScreen() }
+                composable(Screen.Profile.route) {
+                    ProfileScreen(
+                        onNavigateToHome = {
+                            navController.navigate(Screen.Home.route)
+                        }
+                    )
+                }
             }
         }
     }
@@ -67,7 +81,6 @@ fun BottomBar(navController: NavHostController) {
         Screen.Exercise to R.drawable.exercise,
         Screen.Attendance to R.drawable.person
     )
-
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
@@ -77,16 +90,14 @@ fun BottomBar(navController: NavHostController) {
                 icon = { Image(
                     painter = painterResource(id = iconRes),
                     contentDescription = screen.title
-                )  },
+                ) },
                 label = { Text(screen.title) },
                 selected = currentRoute == screen.route,
                 onClick = {
                     navController.navigate(screen.route) {
-                        popUpTo(navController.graph.findStartDestination().id) {
-                            saveState = true
-                        }
+                        // Clear the back stack and set this as new root
+                        popUpTo(0) { inclusive = true }
                         launchSingleTop = true
-                        restoreState = true
                     }
                 }
             )
