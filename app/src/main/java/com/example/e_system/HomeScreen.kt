@@ -24,6 +24,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.e_system.ui.theme.ESystemTheme
 
@@ -33,31 +34,30 @@ class HomeActivity : ComponentActivity() {
 
         setContent {
             ESystemTheme {
-                HomeScreen(
-                    onNavigateToProfile = {
-                        startActivity(Intent(this, ProfileActivity()::class.java))
-                    }
-                )
+                HomeScreen()
             }
         }
     }
 }
 
 @Composable
-fun HomeScreen(onNavigateToProfile:() -> Unit) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-            .verticalScroll(rememberScrollState())
-    ) {
-        Spacer(modifier = Modifier.height(10.dp))
-
-        // Profile Row
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth()
+fun HomeScreen() {
+    val context = LocalContext.current
+    Scaffold(
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState())
         ) {
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Profile Row
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
 
                 Image(
                     painter = painterResource(id = R.drawable.vanda),
@@ -65,72 +65,98 @@ fun HomeScreen(onNavigateToProfile:() -> Unit) {
                     modifier = Modifier
                         .size(46.dp)
                         .clip(CircleShape)
-                        .clickable { onNavigateToProfile()},
+                        .clickable {
+                            context.startActivity(
+                                Intent(
+                                    context,
+                                    ProfileActivity::class.java
+                                )
+                            )
+                        },
                     contentScale = ContentScale.Crop
                 )
 
 
-            Spacer(modifier = Modifier.width(12.dp))
+                Spacer(modifier = Modifier.width(12.dp))
 
-            Column {
-                Text("សួស្ដី · Student", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                Text("Department Information Technology", fontSize = 12.sp)
+                Column {
+                    Text("សួស្ដី · Student", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    Text("Department Information Technology", fontSize = 12.sp)
+                }
+
+                Spacer(modifier = Modifier.weight(1f))
+
+                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    Image(
+                        painter = painterResource(id = R.drawable.search),
+                        contentDescription = "Search",
+                        modifier = Modifier.size(25.dp)
+                    )
+                    Image(
+                        painter = painterResource(id = R.drawable.message),
+                        contentDescription = "Message",
+                        modifier = Modifier
+                            .size(25.dp)
+                            .clickable {
+                                context.startActivity(
+                                    Intent(
+                                        context,
+                                        AIChatActivity::class.java
+                                    )
+                                )
+                            }
+                    )
+                    Image(
+                        painter = painterResource(id = R.drawable.notifications),
+                        contentDescription = "Notifications",
+                        modifier = Modifier
+                            .size(25.dp)
+                            .clickable {
+                                context.startActivity(
+                                    Intent(
+                                        context,
+                                        NotificationActivity::class.java
+                                    )
+                                )
+                            }
+                    )
+                }
             }
 
-            Spacer(modifier = Modifier.weight(1f))
+            Spacer(modifier = Modifier.height(16.dp))
 
-            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            // Top Banner
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(Color.LightGray)
+            ) {
                 Image(
-                    painter = painterResource(id = R.drawable.search),
-                    contentDescription = "Search",
-                    modifier = Modifier.size(25.dp)
-                )
-                Image(
-                    painter = painterResource(id = R.drawable.message),
-                    contentDescription = "Message",
-                    modifier = Modifier.size(25.dp)
-                )
-                Image(
-                    painter = painterResource(id = R.drawable.notifications),
-                    contentDescription = "Notifications",
-                    modifier = Modifier.size(25.dp)
+                    painter = painterResource(id = R.drawable.photorupp),
+                    contentDescription = "Hot View",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
                 )
             }
-        }
 
-        Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-        // Top Banner
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(200.dp)
-                .clip(RoundedCornerShape(8.dp))
-                .background(Color.LightGray)
-        ) {
-            Image(
-                painter = painterResource(id = R.drawable.photorupp),
-                contentDescription = "Hot View",
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
+            // Courses Dropdown
+            CourseYearSemesterDropdown(
+                year = "Year 4",
+                semester = "Semester 2",
+                courses = listOf(
+                    "Mobile App" to R.drawable.smartphone,
+                    "OOAD" to R.drawable.ooad,
+                    "SE" to R.drawable.se,
+                    "Window" to R.drawable.window,
+                    "MIS" to R.drawable.mis,
+                    "More Major" to R.drawable.more
+                )
             )
         }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Courses Dropdown
-        CourseYearSemesterDropdown(
-            year = "Year 4",
-            semester = "Semester 2",
-            courses = listOf(
-                "Mobile App" to R.drawable.smartphone,
-                "OOAD" to R.drawable.ooad,
-                "SE" to R.drawable.se,
-                "Window" to R.drawable.window,
-                "MIS" to R.drawable.mis,
-                "More Major" to R.drawable.more
-            )
-        )
     }
 }
 
@@ -210,6 +236,6 @@ fun CourseCard(title: String, image: Int, modifier: Modifier = Modifier) {
 @Composable
 fun PreviewHomeScreen() {
     ESystemTheme {
-        HomeScreen(onNavigateToProfile = {})
+        HomeScreen()
     }
 }

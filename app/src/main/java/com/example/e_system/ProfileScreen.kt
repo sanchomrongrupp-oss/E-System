@@ -33,7 +33,7 @@ class ProfileActivity : ComponentActivity() {
             ESystemTheme {
                 ProfileScreen(
                     onNavigateToHome = {
-                        startActivity(Intent(this, HomeActivity()::class.java))
+                        startActivity(Intent(this, MainActivity()::class.java))
                         finish()
                     }
                 )
@@ -41,103 +41,115 @@ class ProfileActivity : ComponentActivity() {
         }
     }
 }
-
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProfileScreen(onNavigateToHome:() -> Unit = {}) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-    ) {
-        // Top Bar
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(50.dp)
-                .padding(horizontal = 16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Image(
-                painter = painterResource(id = R.drawable.back),
-                contentDescription = "Back Button",
-                modifier = Modifier
-                    .size(24.dp)
-                    .clickable {onNavigateToHome()}
-            )
-            Spacer(modifier = Modifier.width(16.dp))
-            Text(
-                text = "Informations",
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.Black
-            )
-        }
+fun ProfileScreen(onNavigateToHome: () -> Unit = {}) {
 
-        // Main Card
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp)
-                .padding(top = 160.dp),
-            shape = RoundedCornerShape(20.dp),
-            elevation = CardDefaults.cardElevation(8.dp)
-        ) {
-            Column(
+    // Use Scaffold for proper material design structure
+    Scaffold(
+        topBar = {
+            // Extracted the custom Top Bar content into the topBar slot
+            TopAppBar(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
-                    .padding(top = 80.dp, bottom = 16.dp), // leave space for profile image
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = "San Chomrong",
-                    color = Color.Black,
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold
+                    .padding(start = 8.dp)
+                    .fillMaxWidth(),
+                title = {
+                    Text(
+                        text = "Informations",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Black,
+                        modifier = Modifier.padding(start = 12.dp)
+                    )
+                },
+                navigationIcon = {
+                    Image(
+                        painter = painterResource(id = R.drawable.back),
+                        contentDescription = "Back Button",
+                        modifier = Modifier
+                            .height(30.dp)
+                            .width(30.dp)
+                            .padding(4.dp)
+                            .clickable { onNavigateToHome() }
+                    )
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background // Match background color
                 )
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Profile Options
-                ProfileOption(R.drawable.account, "My Account") { /*TODO*/ }
-                Spacer(modifier = Modifier.height(16.dp))
-                ProfileOption(R.drawable.trend, "Score Records") { /*TODO*/ }
-                Spacer(modifier = Modifier.height(16.dp))
-                ProfileOption(R.drawable.present, "Attendance Records") { /*TODO*/ }
-                Spacer(modifier = Modifier.height(16.dp))
-                ProfileOption(R.drawable.contact_school, "Contact School") { /*TODO*/ }
-                Spacer(modifier = Modifier.height(16.dp))
-                ProfileOption(R.drawable.reset_password, "Change Password") { /*TODO*/ }
-                Spacer(modifier = Modifier.height(16.dp))
-                ProfileOption(R.drawable.log_out, "Log Out", textColor = MaterialTheme.colorScheme.error) { /*TODO*/ }
-
-                Spacer(modifier = Modifier.height(16.dp))
-            }
-        }
-
-        // Profile Image overlapping card
+            )
+        },
+        containerColor = MaterialTheme.colorScheme.background // Set the main background color
+    ) { innerPadding ->
+        // Main Content Box now sits inside the Scaffold padding
         Box(
             modifier = Modifier
-                .padding(top = 100.dp)
-                .size(120.dp)
-                .align(Alignment.TopCenter),
-            contentAlignment = Alignment.Center
+                .fillMaxSize()
+                .padding(innerPadding) // Apply padding from the TopAppBar
         ) {
-            // Background Circle with shadow
+            // Main Card (starts below the image area)
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    // Adjust top padding to position it relative to the TopAppBar and leave room for the image
+                    .padding(top = 100.dp),
+                shape = RoundedCornerShape(20.dp),
+                elevation = CardDefaults.cardElevation(8.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState())
+                        .padding(top = 80.dp, bottom = 16.dp), // leave space for profile image
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "San Chomrong",
+                        color = Color.Black,
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Profile Options
+                    ProfileOption(R.drawable.account, "My Account") { /*TODO*/ }
+                    Spacer(modifier = Modifier.height(16.dp))
+                    ProfileOption(R.drawable.trend, "Score Records") { /*TODO*/ }
+                    Spacer(modifier = Modifier.height(16.dp))
+                    ProfileOption(R.drawable.present, "Attendance Records") { /*TODO*/ }
+                    Spacer(modifier = Modifier.height(16.dp))
+                    ProfileOption(R.drawable.contact_school, "Contact School") { /*TODO*/ }
+                    Spacer(modifier = Modifier.height(16.dp))
+                    ProfileOption(R.drawable.reset_password, "Change Password") { /*TODO*/ }
+                    Spacer(modifier = Modifier.height(16.dp))
+                    ProfileOption(R.drawable.log_out, "Log Out", textColor = MaterialTheme.colorScheme.error) { /*TODO*/ }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+            }
+
+            // Profile Image overlapping card
             Box(
                 modifier = Modifier
-                    .size(120.dp)
-                    .clip(CircleShape)
-
-            )
-            // Actual profile image
-            Image(
-                painter = painterResource(id = R.drawable.vanda),
-                contentDescription = "Profile Image",
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .size(120.dp)
-                    .clip(CircleShape)
-            )
+                    // Position image relative to the top of the entire screen/scaffold
+                    .offset(y = (-50).dp) // Nudges the image up to overlap the TopAppBar area slightly, ensuring it covers the card gap
+                    .align(Alignment.TopCenter)
+                    .padding(top = 100.dp) // Starts 100dp below the Scaffold TopAppBar
+                    .size(120.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                // Background Circle with shadow (Removed redundant Box)
+                // Actual profile image
+                Image(
+                    painter = painterResource(id = R.drawable.vanda),
+                    contentDescription = "Profile Image",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .size(120.dp)
+                        .clip(CircleShape)
+                        .background(Color.White) // Added background for better visual separation/shadow simulation
+                )
+            }
         }
     }
 }

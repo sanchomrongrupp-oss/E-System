@@ -12,8 +12,21 @@
             android:supportsRtl="true"
             android:theme="@style/Theme.ESystem"
             tools:targetApi="31">
-
-        <!-- Splash Screen (Launcher) -->
+        <activity
+                android:name=".MyAccountActivity"
+                android:exported="true"
+                android:label="@string/title_activity_my_account"
+                android:theme="@style/Theme.ESystem" />
+        <activity
+                android:name=".NotificationActivity"
+                android:exported="true"
+                android:label="@string/title_activity_notification"
+                android:theme="@style/Theme.ESystem" />
+        <activity
+                android:name=".AIChatActivity"
+                android:exported="true"
+                android:label="@string/title_activity_aichat"
+                android:theme="@style/Theme.ESystem" />
         <activity
                 android:name=".SplashActivity"
                 android:exported="true"
@@ -21,62 +34,46 @@
                 android:theme="@style/Theme.ESystem">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity>
-
-        <!-- Intro Screens -->
+        </activity> <!-- Intro Screens -->
         <activity
                 android:name=".IntroFirstActivity"
                 android:exported="true"
                 android:label="@string/title_activity_intro_first" />
-
         <activity
                 android:name=".IntroSecondActivity"
                 android:exported="true"
                 android:label="@string/title_activity_intro_second" />
-
         <activity
                 android:name=".IntroThirdActivity"
                 android:exported="true"
-                android:label="@string/title_activity_intro_third" />
-
-        <!-- Sign In -->
+                android:label="@string/title_activity_intro_third" /> <!-- Sign In -->
         <activity
                 android:name=".SigInActivity"
                 android:exported="true"
-                android:label="@string/title_activity_sign_in" />
-
-        <!-- Home -->
+                android:label="@string/title_activity_sign_in" /> <!-- Home -->
         <activity
                 android:name=".HomeActivity"
                 android:exported="true"
-                android:label="@string/title_activity_home" />
-
-        <!-- Exercise -->
+                android:label="@string/title_activity_home" /> <!-- Exercise -->
         <activity
                 android:name=".ExerciseActivity"
                 android:exported="true"
-                android:label="@string/title_activity_exercise" />
-
-        <!-- Attendance -->
+                android:label="@string/title_activity_exercise" /> <!-- Attendance -->
         <activity
                 android:name=".AttendanceActivity"
                 android:exported="true"
-                android:label="@string/title_activity_attendance" />
-
-        <!-- Profile -->
+                android:label="@string/title_activity_attendance" /> <!-- Profile -->
         <activity
                 android:name=".ProfileActivity"
                 android:exported="true"
-                android:label="@string/title_activity_profile" />
-
-        <!-- Main Activity -->
+                android:label="@string/title_activity_profile" /> <!-- Main Activity -->
         <activity
                 android:name=".MainActivity"
                 android:exported="true"
                 android:label="@string/title_activity_main" />
-
     </application>
 
 </manifest>

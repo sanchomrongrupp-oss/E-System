@@ -6,12 +6,14 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
-import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
@@ -24,7 +26,7 @@ sealed class Screen(val route: String, val title: String) {
     object Home : Screen("home", "Home")
     object Exercise : Screen("exercise", "Exercise")
     object Attendance : Screen("attendance", "Attendance")
-    object Profile : Screen("profile","Profile")
+
 }
 
 class MainActivity : ComponentActivity() {
@@ -53,22 +55,9 @@ fun MainScreen(navController: NavHostController) {
                 startDestination = Screen.Home.route,
                 modifier = Modifier.padding(innerPadding)
             ) {
-                composable(Screen.Home.route) {
-                    HomeScreen (
-                        onNavigateToProfile = {
-                            navController.navigate(Screen.Profile.route)
-                        }
-                    )
-                }
+                composable(Screen.Home.route) { HomeScreen() }
                 composable(Screen.Exercise.route) { ExerciseScreen() }
                 composable(Screen.Attendance.route) { AttendanceScreen() }
-                composable(Screen.Profile.route) {
-                    ProfileScreen(
-                        onNavigateToHome = {
-                            navController.navigate(Screen.Home.route)
-                        }
-                    )
-                }
             }
         }
     }
@@ -89,9 +78,10 @@ fun BottomBar(navController: NavHostController) {
             NavigationBarItem(
                 icon = { Image(
                     painter = painterResource(id = iconRes),
-                    contentDescription = screen.title
+                    contentDescription = screen.title,
+                            modifier = Modifier.size(28.dp)
                 ) },
-                label = { Text(screen.title) },
+                label = { Text(screen.title, fontSize = 14.sp) },
                 selected = currentRoute == screen.route,
                 onClick = {
                     navController.navigate(screen.route) {

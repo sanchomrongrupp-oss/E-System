@@ -39,7 +39,13 @@ class AttendanceActivity : ComponentActivity() {
 fun AttendanceScreen() {
     var expanded by remember { mutableStateOf(false) }
     var selectedOption by remember { mutableStateOf("Select Semester") }
-    val dropdownOptions = listOf("Semester 1", "Semester 2", "Semester 3")
+    val dropdownOptions = listOf(
+        "Mobile System & App",
+        "M.I.S",
+        "S.E and IT PM",
+        "Windows Server Admin",
+        "OOAD and Prog"
+    )
 
     Column(
         modifier = Modifier
@@ -50,8 +56,7 @@ fun AttendanceScreen() {
         // Top Title Bar
         Card(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 40.dp),
+                .fillMaxWidth(),
             colors = CardDefaults.cardColors(containerColor = Color.White),
             elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
         ) {
@@ -81,7 +86,8 @@ fun AttendanceScreen() {
                 value = selectedOption,
                 onValueChange = {},
                 modifier = Modifier
-                    .fillMaxWidth(),
+                    .fillMaxWidth()
+                    .menuAnchor(),
                 readOnly = true,
                 trailingIcon = {
                     ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
