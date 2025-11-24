@@ -43,21 +43,19 @@ class HomeActivity : ComponentActivity() {
 @Composable
 fun HomeScreen() {
     val context = LocalContext.current
-    Scaffold(
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp)
-                .verticalScroll(rememberScrollState())
-        ) {
-            Spacer(modifier = Modifier.height(10.dp))
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState())
+    ) {
+        Spacer(modifier = Modifier.height(10.dp))
 
-            // Profile Row
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
+        // Profile Row
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth()
+        ) {
 
                 Image(
                     painter = painterResource(id = R.drawable.vanda),
@@ -66,97 +64,89 @@ fun HomeScreen() {
                         .size(46.dp)
                         .clip(CircleShape)
                         .clickable {
-                            context.startActivity(
-                                Intent(
-                                    context,
-                                    ProfileActivity::class.java
-                                )
-                            )
+                            val intent = Intent(context, ProfileActivity::class.java)
+                            context.startActivity(intent)
                         },
                     contentScale = ContentScale.Crop
                 )
 
 
-                Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(12.dp))
 
-                Column {
-                    Text("សួស្ដី · Student", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                    Text("Department Information Technology", fontSize = 12.sp)
-                }
-
-                Spacer(modifier = Modifier.weight(1f))
-
-                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    Image(
-                        painter = painterResource(id = R.drawable.search),
-                        contentDescription = "Search",
-                        modifier = Modifier.size(25.dp)
-                    )
-                    Image(
-                        painter = painterResource(id = R.drawable.message),
-                        contentDescription = "Message",
-                        modifier = Modifier
-                            .size(25.dp)
-                            .clickable {
-                                context.startActivity(
-                                    Intent(
-                                        context,
-                                        AIChatActivity::class.java
-                                    )
-                                )
-                            }
-                    )
-                    Image(
-                        painter = painterResource(id = R.drawable.notifications),
-                        contentDescription = "Notifications",
-                        modifier = Modifier
-                            .size(25.dp)
-                            .clickable {
-                                context.startActivity(
-                                    Intent(
-                                        context,
-                                        NotificationActivity::class.java
-                                    )
-                                )
-                            }
-                    )
-                }
+            Column {
+                Text("សួស្ដី · Student", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                Text("Department Information Technology", fontSize = 12.sp)
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.weight(1f))
 
-            // Top Banner
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(Color.LightGray)
-            ) {
+            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 Image(
-                    painter = painterResource(id = R.drawable.photorupp),
-                    contentDescription = "Hot View",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
+                    painter = painterResource(id = R.drawable.search),
+                    contentDescription = "Search",
+                    modifier = Modifier
+                        .size(25.dp)
+                        .clickable{
+                            val intent = Intent(context, SearchActivity::class.java)
+                            context.startActivity(intent)
+                        },
+                )
+                Image(
+                    painter = painterResource(id = R.drawable.message),
+                    contentDescription = "Message",
+                    modifier = Modifier
+                        .size(25.dp)
+                        .clickable {
+                            val intent = Intent(context, AIChatActivity::class.java)
+                            context.startActivity(intent)
+                        },
+                )
+                Image(
+                    painter = painterResource(id = R.drawable.notifications),
+                    contentDescription = "Notifications",
+                    modifier = Modifier
+                        .size(25.dp)
+                        .clickable {
+                            val intent = Intent(context, NotificationActivity::class.java)
+                            context.startActivity(intent)
+                        },
                 )
             }
+        }
 
-            Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
-            // Courses Dropdown
-            CourseYearSemesterDropdown(
-                year = "Year 4",
-                semester = "Semester 2",
-                courses = listOf(
-                    "Mobile App" to R.drawable.smartphone,
-                    "OOAD" to R.drawable.ooad,
-                    "SE" to R.drawable.se,
-                    "Window" to R.drawable.window,
-                    "MIS" to R.drawable.mis,
-                    "More Major" to R.drawable.more
-                )
+        // Top Banner
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(200.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(Color.LightGray)
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.photorupp),
+                contentDescription = "Hot View",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
             )
         }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Courses Dropdown
+        CourseYearSemesterDropdown(
+            year = "Year 4",
+            semester = "Semester 2",
+            courses = listOf(
+                "Mobile App" to R.drawable.smartphone,
+                "OOAD" to R.drawable.ooad,
+                "SE" to R.drawable.se,
+                "Window" to R.drawable.window,
+                "MIS" to R.drawable.mis,
+                "More Major" to R.drawable.more
+            )
+        )
     }
 }
 

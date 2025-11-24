@@ -1,5 +1,6 @@
 package com.example.e_system
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -29,14 +30,19 @@ class SigInActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             ESystemTheme {
-                SigInScreen()
+                SigInScreen(
+                    onSignIn = {
+                        startActivity(Intent(this, MainActivity::class.java))
+                        finish() // finish to prevent going back
+                    }
+                )
             }
         }
     }
 }
 
 @Composable
-fun SigInScreen() {
+fun SigInScreen( onSignIn: () -> Unit) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
@@ -138,7 +144,7 @@ fun SigInScreen() {
 
         // Login Button
         Button(
-            onClick = { /* Handle login */ },
+            onClick = {onSignIn()},
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2D4B65)),
             modifier = Modifier
                 .fillMaxWidth()
@@ -171,6 +177,6 @@ fun SigInScreen() {
 @Composable
 fun PreviewSignInScreen() {
     ESystemTheme {
-        SigInScreen()
+        SigInScreen(onSignIn = {})
     }
 }

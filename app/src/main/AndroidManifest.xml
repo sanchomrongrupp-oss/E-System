@@ -13,6 +13,31 @@
             android:theme="@style/Theme.ESystem"
             tools:targetApi="31">
         <activity
+                android:name=".ChangePasswordActivity"
+                android:exported="false"
+                android:label="@string/title_activity_change_password"
+                android:theme="@style/Theme.ESystem" />
+        <activity
+                android:name=".ContactSchoolActivity"
+                android:exported="false"
+                android:label="@string/title_activity_contact_school"
+                android:theme="@style/Theme.ESystem" />
+        <activity
+                android:name=".AttRecordActivity"
+                android:exported="false"
+                android:label="@string/title_activity_att_record"
+                android:theme="@style/Theme.ESystem" />
+        <activity
+                android:name=".ScoreRecordActivity"
+                android:exported="false"
+                android:label="@string/title_activity_score_record"
+                android:theme="@style/Theme.ESystem" />
+        <activity
+                android:name=".SearchActivity"
+                android:exported="false"
+                android:label="@string/title_activity_search"
+                android:theme="@style/Theme.ESystem" />
+        <activity
                 android:name=".MyAccountActivity"
                 android:exported="true"
                 android:label="@string/title_activity_my_account"

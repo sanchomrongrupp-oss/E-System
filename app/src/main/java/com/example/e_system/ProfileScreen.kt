@@ -25,6 +25,7 @@ import com.example.e_system.ui.theme.ESystemTheme
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.ui.platform.LocalContext
 
 class ProfileActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -44,7 +45,7 @@ class ProfileActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(onNavigateToHome: () -> Unit = {}) {
-
+    val context = LocalContext.current
     // Use Scaffold for proper material design structure
     Scaffold(
         topBar = {
@@ -112,15 +113,30 @@ fun ProfileScreen(onNavigateToHome: () -> Unit = {}) {
                     Spacer(modifier = Modifier.height(16.dp))
 
                     // Profile Options
-                    ProfileOption(R.drawable.account, "My Account") { /*TODO*/ }
+                    ProfileOption(R.drawable.account, "My Account") {
+                        val intent = Intent(context, MyAccountActivity::class.java)
+                        context.startActivity(intent)
+                    }
                     Spacer(modifier = Modifier.height(16.dp))
-                    ProfileOption(R.drawable.trend, "Score Records") { /*TODO*/ }
+                    ProfileOption(R.drawable.trend, "Score Records") {
+                        val intent = Intent(context, ScoreRecordActivity::class.java)
+                        context.startActivity(intent)
+                    }
                     Spacer(modifier = Modifier.height(16.dp))
-                    ProfileOption(R.drawable.present, "Attendance Records") { /*TODO*/ }
+                    ProfileOption(R.drawable.present, "Attendance Records") {
+                        val intent = Intent(context, AttRecordActivity::class.java)
+                        context.startActivity(intent)
+                    }
                     Spacer(modifier = Modifier.height(16.dp))
-                    ProfileOption(R.drawable.contact_school, "Contact School") { /*TODO*/ }
+                    ProfileOption(R.drawable.contact_school, "Contact School") {
+                        val intent = Intent(context, ContactSchoolActivity::class.java)
+                        context.startActivity(intent)
+                    }
                     Spacer(modifier = Modifier.height(16.dp))
-                    ProfileOption(R.drawable.reset_password, "Change Password") { /*TODO*/ }
+                    ProfileOption(R.drawable.reset_password, "Change Password") {
+                        val intent = Intent(context, ChangePasswordActivity::class.java)
+                        context.startActivity(intent)
+                    }
                     Spacer(modifier = Modifier.height(16.dp))
                     ProfileOption(R.drawable.log_out, "Log Out", textColor = MaterialTheme.colorScheme.error) { /*TODO*/ }
 

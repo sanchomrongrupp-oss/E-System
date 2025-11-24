@@ -27,5 +27,9 @@
     <string name="title_activity_main">Main Activity</string>
     <string name="title_activity_aichat">AIChatActivity</string>
     <string name="title_activity_my_account">MyAccountActivity</string>
+    <string name="title_activity_score_record">ScoreRecordActivity</string>
+    <string name="title_activity_att_record">AttRecordActivity</string>
+    <string name="title_activity_contact_school">ContactSchoolActivity</string>
+    <string name="title_activity_change_password">ChangePasswordActivity</string>
 
 </resources>
