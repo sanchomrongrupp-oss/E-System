@@ -26,6 +26,10 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 
 class ProfileActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -34,7 +38,14 @@ class ProfileActivity : ComponentActivity() {
             ESystemTheme {
                 ProfileScreen(
                     onNavigateToHome = {
-                        startActivity(Intent(this, MainActivity()::class.java))
+                        // Assuming MainActivity is your home screen
+                        startActivity(Intent(this, MainActivity::class.java))
+                        finish()
+                    },
+                    onLogoutConfirmed = {
+                        // Implement your actual logout logic here
+                        // For example: clear local data, redirect to login screen
+                        startActivity(Intent(this, SigInActivity::class.java)) // Assuming LoginActivity exists
                         finish()
                     }
                 )
@@ -42,14 +53,18 @@ class ProfileActivity : ComponentActivity() {
         }
     }
 }
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProfileScreen(onNavigateToHome: () -> Unit = {}) {
+fun ProfileScreen(
+    onNavigateToHome: () -> Unit = {},
+    onLogoutConfirmed: () -> Unit = {}
+) {
     val context = LocalContext.current
-    // Use Scaffold for proper material design structure
+    var showLogoutDialog by remember { mutableStateOf(false) } // <-- State for dialog visibility
+
     Scaffold(
         topBar = {
-            // Extracted the custom Top Bar content into the topBar slot
             TopAppBar(
                 modifier = Modifier
                     .padding(start = 8.dp)
@@ -65,6 +80,7 @@ fun ProfileScreen(onNavigateToHome: () -> Unit = {}) {
                 },
                 navigationIcon = {
                     Image(
+                        // Note: If you don't have R.drawable.back, use Icons.AutoMirrored.Filled.ArrowBack
                         painter = painterResource(id = R.drawable.back),
                         contentDescription = "Back Button",
                         modifier = Modifier
@@ -75,25 +91,23 @@ fun ProfileScreen(onNavigateToHome: () -> Unit = {}) {
                     )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background // Match background color
+                    containerColor = MaterialTheme.colorScheme.background
                 )
             )
         },
-        containerColor = MaterialTheme.colorScheme.background // Set the main background color
+        containerColor = MaterialTheme.colorScheme.background
     ) { innerPadding ->
-        // Main Content Box now sits inside the Scaffold padding
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding) // Apply padding from the TopAppBar
+                .padding(innerPadding)
         ) {
-            // Main Card (starts below the image area)
+            // Main Card
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp)
-                    // Adjust top padding to position it relative to the TopAppBar and leave room for the image
-                    .padding(top = 100.dp),
+                    .padding(top = 100.dp), // Position card below image area
                 shape = RoundedCornerShape(20.dp),
                 elevation = CardDefaults.cardElevation(8.dp)
             ) {
@@ -101,11 +115,11 @@ fun ProfileScreen(onNavigateToHome: () -> Unit = {}) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .verticalScroll(rememberScrollState())
-                        .padding(top = 80.dp, bottom = 16.dp), // leave space for profile image
+                        .padding(top = 80.dp, bottom = 16.dp), // Space for profile image overlap
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "San Chomrong",
+                        text = "Meng Kimleap", // Updated to match the image name
                         color = Color.Black,
                         fontSize = 22.sp,
                         fontWeight = FontWeight.Bold
@@ -113,32 +127,36 @@ fun ProfileScreen(onNavigateToHome: () -> Unit = {}) {
                     Spacer(modifier = Modifier.height(16.dp))
 
                     // Profile Options
-                    ProfileOption(R.drawable.account, "My Account") {
-                        val intent = Intent(context, MyAccountActivity::class.java)
-                        context.startActivity(intent)
+                    ProfileOption(R.drawable.account, "Personal Information") {
+                        context.startActivity(Intent(context, MyAccountActivity::class.java))
                     }
                     Spacer(modifier = Modifier.height(16.dp))
                     ProfileOption(R.drawable.trend, "Score Records") {
-                        val intent = Intent(context, ScoreRecordActivity::class.java)
-                        context.startActivity(intent)
+                        context.startActivity(Intent(context, ScoreRecordActivity::class.java))
                     }
                     Spacer(modifier = Modifier.height(16.dp))
                     ProfileOption(R.drawable.present, "Attendance Records") {
-                        val intent = Intent(context, AttRecordActivity::class.java)
-                        context.startActivity(intent)
+                        context.startActivity(Intent(context, AttRecordActivity::class.java))
                     }
                     Spacer(modifier = Modifier.height(16.dp))
-                    ProfileOption(R.drawable.contact_school, "Contact School") {
-                        val intent = Intent(context, ContactSchoolActivity::class.java)
-                        context.startActivity(intent)
+                    ProfileOption(R.drawable.contact_school, "E-System Support") {
+                        context.startActivity(Intent(context, ContactSchoolActivity::class.java))
                     }
                     Spacer(modifier = Modifier.height(16.dp))
                     ProfileOption(R.drawable.reset_password, "Change Password") {
-                        val intent = Intent(context, ChangePasswordActivity::class.java)
-                        context.startActivity(intent)
+                        context.startActivity(Intent(context, ChangePasswordActivity::class.java))
                     }
                     Spacer(modifier = Modifier.height(16.dp))
-                    ProfileOption(R.drawable.log_out, "Log Out", textColor = MaterialTheme.colorScheme.error) { /*TODO*/ }
+                    ProfileOption(R.drawable.help, "About the App") {
+                        context.startActivity(Intent(context, AboutAppActivity::class.java))
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // --- LOGOUT OPTION (TRIGGER DIALOG) ---
+                    ProfileOption(R.drawable.log_out, "Log Out", textColor = MaterialTheme.colorScheme.error) {
+                        showLogoutDialog = true // <-- Show the dialog on click
+                    }
+                    // ------------------------------------
 
                     Spacer(modifier = Modifier.height(16.dp))
                 }
@@ -147,27 +165,82 @@ fun ProfileScreen(onNavigateToHome: () -> Unit = {}) {
             // Profile Image overlapping card
             Box(
                 modifier = Modifier
-                    // Position image relative to the top of the entire screen/scaffold
-                    .offset(y = (-50).dp) // Nudges the image up to overlap the TopAppBar area slightly, ensuring it covers the card gap
+                    .offset(y = (-50).dp)
                     .align(Alignment.TopCenter)
-                    .padding(top = 100.dp) // Starts 100dp below the Scaffold TopAppBar
+                    .padding(top = 100.dp)
                     .size(120.dp),
                 contentAlignment = Alignment.Center
             ) {
-                // Background Circle with shadow (Removed redundant Box)
-                // Actual profile image
                 Image(
+                    // Note: If you don't have R.drawable.vanda, replace it with a placeholder image
                     painter = painterResource(id = R.drawable.vanda),
                     contentDescription = "Profile Image",
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
                         .size(120.dp)
                         .clip(CircleShape)
-                        .background(Color.White) // Added background for better visual separation/shadow simulation
+                        .background(Color.White)
                 )
             }
         }
     }
+
+    // --- LOGOUT DIALOG COMPOSABLE ---
+    if (showLogoutDialog) {
+        LogoutDialog(
+            onDismiss = { showLogoutDialog = false },
+            onConfirm = {
+                showLogoutDialog = false
+                onLogoutConfirmed() // Execute the actual logout function
+            }
+        )
+    }
+    // --------------------------------
+}
+
+// --- LOGOUT DIALOG FUNCTION ---
+@Composable
+fun LogoutDialog(onDismiss: () -> Unit, onConfirm: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = Color.White,
+        shape = RoundedCornerShape(16.dp),
+        title = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "Logout Account",
+                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                )
+                Spacer(modifier = Modifier.weight(1f))
+//                IconButton(onClick = onDismiss) {
+//                    // Using a standard close icon (X)
+//                    Icon(
+//                        painter = painterResource(id = R.drawable.absent), // Assuming R.drawable.close_icon exists
+//                        contentDescription = "Close",
+//                        tint = Color.Gray,
+//                        modifier = Modifier.size(24.dp)
+//                    )
+//                }
+            }
+        },
+        text = {
+            Text("Are you sure you want to logout?")
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                Text(
+                    "Logout",
+                    color = MaterialTheme.colorScheme.error, // Red color for danger action
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel", color = Color.Gray)
+            }
+        }
+    )
 }
 
 @Composable

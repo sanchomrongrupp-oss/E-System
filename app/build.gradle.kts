@@ -65,6 +65,8 @@ dependencies {
     implementation("androidx.navigation:navigation-compose:2.7.3")
     implementation("androidx.compose.material3:material3:1.2.0")
     implementation("com.google.android.material:material:1.12.0")
+    implementation("androidx.compose.material3:material3:1.2.1")
+    implementation("androidx.compose.ui:ui-tooling-preview")
     implementation(libs.androidx.compose.foundation)
     implementation(libs.protolite.well.known.types)
     testImplementation(libs.junit)

@@ -5,30 +5,26 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.e_system.ui.theme.ESystemTheme
-import com.google.rpc.Help
 
 /**
- * Main Activity for the User Account/Profile page.
+ * Main Activity for the User Account/Profile page (My Account Information).
  */
 class MyAccountActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -42,243 +38,126 @@ class MyAccountActivity : ComponentActivity() {
 }
 
 /**
- * Main Composable for the My Account Screen.
+ * Main Composable for the My Account Screen, displaying user details in a table format.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MyAccountScreen(onBackClick: () -> Unit) {
+    // Dummy Data to replicate the image content
+    val userData = mapOf(
+        "Full Name:" to "Meng Kimleap",
+        "Name in Khmer:" to "ម៉េង គីមលាប",
+        "Gender:" to "Female",
+        "Date of Birth:" to "03-April-2004",
+        "Place of Birth:" to "Phnom Penh",
+        "Email:" to "meng11@gmail.com",
+        "Phone:" to "098 776 656",
+        "Occupation:" to "Student",
+        "Address:" to "Samraong Kraom, Pursenchey, Phnom Penh",
+        "Study Shift:" to "Evening : 5:30 - 8:30PM"
+    )
     Scaffold(
         topBar = {
-            AccountTopBar(onBackClick = onBackClick)
+            // Reusing the simple Top Bar structure from the image
+            TopAppBar(
+                title = {
+                    Text(
+                        text = "Personal Information",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Black
+                    )
+                },
+                navigationIcon = {
+                    IconButton(onClick = onBackClick) {
+                        Icon(
+                            painter = painterResource(R.drawable.back) ,
+                            contentDescription = "Back",
+                            tint = Color.Black
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color.White // Light Blue bar background
+                ),
+                modifier = Modifier.background(Color(0xFFE3F2FD)) // Optional: Add light blue to the background of the entire TopAppBar area
+            )
         },
-        modifier = Modifier.fillMaxSize()
+        containerColor = Color(0xFFF0F4F7) // Light gray/blue background for the screen
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
-                .padding(16.dp),
+                .padding(horizontal = 16.dp, vertical = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // 1. Profile Header (Avatar and Primary Info)
-            ProfileHeader(
-                name = "Kimleap",
-                studentId = "20220901",
-                major = "Computer Science"
-            )
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            // 2. Settings Group
-            AccountSection(title = "Account Settings") {
-                AccountActionItem(
-                    icon = Icons.Default.Person,
-                    label = "Personal Information",
-                    onClick = { /* Navigate to personal info edit screen */ }
-                )
-                AccountActionItem(
-                    icon = Icons.Default.Lock,
-                    label = "Change Password",
-                    onClick = { /* Navigate to password change screen */ }
-                )
-                AccountActionItem(
-                    icon = Icons.Default.Email,
-                    label = "Manage Email & Notifications",
-                    onClick = { /* Navigate to notification settings */ }
-                )
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // 3. System Actions Group
-            AccountSection(title = "System") {
-                AccountActionItem(
-                    icon = Icons.Default.Info,
-                    label = "About the App",
-                    onClick = { /* Show app version/info */ }
-                )
-                AccountActionItem(
-                    icon = Icons.Default.Home,
-                    label = "Help & Support",
-                    onClick = { /* Open support link */ }
-                )
-            }
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            // 4. Logout Button
-            LogoutButton {
-                // TODO: Implement actual sign out logic
-                println("User attempting to log out")
+            // Main Card Container for the detailed fields
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                elevation = CardDefaults.cardElevation(4.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White)
+            ) {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    // Iterate through the map to create the rows
+                    userData.entries.forEachIndexed { index, entry ->
+                        AccountDetailRow(
+                            label = entry.key,
+                            value = entry.value,
+                            isLastItem = (index == userData.size - 1)
+                        )
+                    }
+                }
             }
         }
     }
 }
 
 /**
- * Custom Top Bar for the Account Screen, using Card for consistent styling with ExerciseActivity.
+ * Single Row for displaying a label and its corresponding value.
  */
 @Composable
-fun AccountTopBar(onBackClick: () -> Unit) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(bottomStart = 16.dp, bottomEnd = 16.dp),
-        elevation = CardDefaults.cardElevation(8.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 4.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(onClick = onBackClick) {
-                Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
-            }
-            Text(
-                text = "My Account",
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.weight(1f).padding(start = 8.dp)
-            )
-            // Optional: Settings/Edit icon could go here if needed
-        }
-    }
-}
-
-/**
- * Displays the user's profile picture and core identity information.
- */
-@Composable
-fun ProfileHeader(name: String, studentId: String, major: String) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        // Placeholder for Profile Picture (using a simple colored circle)
-        Box(
-            modifier = Modifier
-                .size(96.dp)
-                .clip(CircleShape)
-                .background(Color(0xFF4CAF50)), // Green color for avatar
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = name.first().toString(),
-                color = Color.White,
-                fontSize = 48.sp,
-                fontWeight = FontWeight.ExtraBold
-            )
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Name and Major
-        Text(
-            text = name,
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-        Text(
-            text = major,
-            fontSize = 16.sp,
-            color = Color.Gray
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = "ID: $studentId",
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Medium,
-            color = Color.DarkGray
-        )
-    }
-}
-
-/**
- * Groups related account settings items under a clear title.
- */
-@Composable
-fun AccountSection(title: String, content: @Composable () -> Unit) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Text(
-            text = title,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = Color.DarkGray,
-            modifier = Modifier.padding(bottom = 8.dp, start = 8.dp)
-        )
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
-            elevation = CardDefaults.cardElevation(4.dp)
-        ) {
-            Column {
-                content()
-            }
-        }
-    }
-}
-
-/**
- * Reusable row item for settings and actions.
- */
-@Composable
-fun AccountActionItem(
-    icon: ImageVector,
+fun AccountDetailRow(
     label: String,
-    onClick: () -> Unit,
-    showDivider: Boolean = true
+    value: String,
+    isLastItem: Boolean
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable(onClick = onClick)
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+                .padding(horizontal = 16.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(24.dp)
-                )
-                Spacer(modifier = Modifier.width(16.dp))
-                Text(
-                    text = label,
-                    fontSize = 16.sp,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-            }
-            Icon(
-                imageVector = Icons.Default.KeyboardArrowRight,
-                contentDescription = "Navigate",
-                tint = Color.Gray
+            // Label (e.g., Full Name)
+            Text(
+                text = label,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Normal,
+                color = Color.DarkGray
+            )
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            // Value (e.g., Meng Kimleap)
+            Text(
+                text = value,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = Color.Black
             )
         }
-        if (showDivider) {
-            // Check if it's the last item to avoid drawing an unnecessary divider
-            Divider(modifier = Modifier.padding(start = 56.dp), thickness = 0.5.dp)
-        }
-    }
-}
 
-/**
- * Dedicated Logout button with a distinct red color for safety.
- */
-@Composable
-fun LogoutButton(onClick: () -> Unit) {
-    Button(
-        onClick = onClick,
-        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD32F2F)), // Red color
-        shape = RoundedCornerShape(10.dp),
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(50.dp)
-            .padding(horizontal = 4.dp)
-    ) {
-        Text("LOG OUT", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+        // Horizontal Divider as shown in the image, except for the last item
+        if (!isLastItem) {
+            Divider(
+                modifier = Modifier.padding(horizontal = 16.dp),
+                thickness = 1.dp,
+                color = Color.LightGray.copy(alpha = 0.5f)
+            )
+        }
     }
 }
 
