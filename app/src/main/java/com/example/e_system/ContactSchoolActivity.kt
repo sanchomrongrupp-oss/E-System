@@ -15,12 +15,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Call
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -35,7 +29,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -45,7 +39,7 @@ import com.example.e_system.ui.theme.ESystemTheme
 data class ContactDetail(
     val title: String,
     val detail: String,
-    val icon: ImageVector,
+    val icon: Int,
     val actionType: String // e.g., "CALL", "EMAIL", "MAP"
 )
 
@@ -72,19 +66,19 @@ val schoolContactInfo = listOf(
     ContactDetail(
         title = "Phone",
         detail = "+1 (555) 123-4567",
-        icon = Icons.Default.Call,
+        icon = R.drawable.call,
         actionType = "CALL"
     ),
     ContactDetail(
         title = "Email",
         detail = "registrar@schoolname.edu",
-        icon = Icons.Default.Email,
+        icon = R.drawable.mail,
         actionType = "EMAIL"
     ),
     ContactDetail(
         title = "Address",
         detail = "123 Academic Way, City, State 10001",
-        icon = Icons.Default.LocationOn,
+        icon = R.drawable.location,
         actionType = "MAP"
     )
 )
@@ -109,7 +103,7 @@ fun ContactSchoolScreen(
                 navigationIcon = {
                     IconButton(onClick = onBackClicked) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            painter = painterResource(R.drawable.back),
                             contentDescription = "Back",
                             tint = Color.Black
                         )
@@ -164,7 +158,7 @@ fun ContactItem(contact: ContactDetail, onClick: () -> Unit) {
         ) {
             // Left: Icon
             Icon(
-                imageVector = contact.icon,
+                painter = painterResource(R.drawable.contact_school),
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary, // Use a primary color for the icon
                 modifier = Modifier.size(28.dp)
@@ -189,7 +183,7 @@ fun ContactItem(contact: ContactDetail, onClick: () -> Unit) {
 
             // Right: Arrow Indicator
             Icon(
-                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                painter = painterResource(R.drawable.back),
                 contentDescription = "Action",
                 tint = Color.Gray,
                 modifier = Modifier.size(24.dp)

@@ -11,9 +11,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -59,7 +56,7 @@ fun AboutAppScreen(onBackClick: () -> Unit) {
                 },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(painter = painterResource(R.drawable.back), contentDescription = "Back")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -148,7 +145,7 @@ fun AppBranding(appName: String, appVersion: String) {
                 // Assuming you have an app icon resource named 'app_icon'
                 // If not, use Icons.Default.Info as a temporary placeholder
                 Icon(
-                    imageVector = Icons.Default.Info,
+                    painter = painterResource(R.drawable.info),
                     contentDescription = appName,
                     tint = Color(0xFF2E4E68), // Dark Blue color
                     modifier = Modifier.size(64.dp)

@@ -3,14 +3,11 @@ package com.example.e_system
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -141,7 +138,6 @@ fun AccountDetailRow(
 
             Spacer(modifier = Modifier.weight(1f))
 
-            // Value (e.g., Meng Kimleap)
             Text(
                 text = value,
                 fontSize = 16.sp,

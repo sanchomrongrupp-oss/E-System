@@ -16,12 +16,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material.icons.filled.Email
 import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -43,7 +38,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -96,7 +90,7 @@ fun ChangePasswordScreen(
                 navigationIcon = {
                     IconButton(onClick = onBackClicked) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            painter = painterResource(R.drawable.back),
                             contentDescription = "Back",
                             tint = Color.Black
                         )
@@ -127,7 +121,13 @@ fun ChangePasswordScreen(
             InputField(
                 value = currentEmail,
                 label = "",
-                leadingIcon = Icons.Default.Email,
+                leadingIcon = {
+                    Icon(
+                        painter = painterResource(R.drawable.mail) ,
+                        contentDescription = "Email Icon", // IMPORTANT for accessibility
+                        tint = Color.Gray // Optional: Set a tint color
+                    )
+                              },
                 isReadOnly = true
             )
             Spacer(modifier = Modifier.height(16.dp))
@@ -184,7 +184,7 @@ fun ChangePasswordScreen(
                 )
                 Spacer(modifier = Modifier.size(8.dp))
                 Icon(
-                    imageVector = Icons.AutoMirrored.Filled.Send,
+                    painter = painterResource(R.drawable.send),
                     contentDescription = null,
                     tint = Color.White,
                     modifier = Modifier.size(20.dp)
@@ -219,7 +219,7 @@ fun PasswordHeader(email: String) {
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = Icons.Default.Refresh, // Using Refresh to simulate the circular arrow
+                    painter = painterResource(R.drawable.refresh), // Using Refresh to simulate the circular arrow
                     contentDescription = "Change Password",
                     tint = Color(0xFF2E4E68),
                     modifier = Modifier.size(32.dp)
@@ -248,7 +248,7 @@ fun PasswordHeader(email: String) {
 fun InputField(
     value: String,
     label: String,
-    leadingIcon: ImageVector,
+    leadingIcon: @Composable () -> Unit,
     isReadOnly: Boolean = false
 ) {
     OutlinedTextField(

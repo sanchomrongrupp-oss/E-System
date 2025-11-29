@@ -10,9 +10,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -126,7 +123,7 @@ fun RUPPToolbar(onBackClick: () -> Unit) {
         actions = {
             IconButton(onClick = { /* Handle Menu Click */ }) {
                 Icon(
-                    Icons.Filled.Menu,
+                    painter = painterResource(R.drawable.menu),
                     contentDescription = "Menu",
                     tint = Color.Black,
                 )
@@ -155,7 +152,9 @@ fun RUPPInputBar(
         shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
         color = Color.White,
         shadowElevation = 8.dp,
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(130.dp)
     ) {
         Column(modifier = Modifier.padding(top = 8.dp)) {
             Row(
@@ -163,7 +162,7 @@ fun RUPPInputBar(
                     .fillMaxWidth()
                     .heightIn(min = 60.dp)
                     .padding(horizontal = 12.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.Bottom,
+                verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 // Input controls (Left side: Plus & Attach)
@@ -217,11 +216,19 @@ fun RUPPInputBar(
                                 .size(24.dp)
                                 .clickable { /* Handle mic click */ }
                         )
+                        Icon(
+                            painter = painterResource(id = R.drawable.voice),
+                            contentDescription = "Voice",
+                            tint = Color.Gray,
+                            modifier = Modifier
+                                .size(24.dp)
+                                .clickable { /* Handle mic click */ }
+                        )
                     } else {
                         // Send Button when input is not empty
                         IconButton(onClick = onSendClick, enabled = !isMessageEmpty) {
                             Icon(
-                                imageVector = Icons.AutoMirrored.Filled.Send,
+                                painter = painterResource(R.drawable.send),
                                 contentDescription = "Send",
                                 tint = sendIconColor,
                                 modifier = Modifier.size(24.dp)

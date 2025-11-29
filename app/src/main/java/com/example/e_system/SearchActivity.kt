@@ -8,15 +8,11 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.e_system.ui.theme.ESystemTheme
@@ -96,7 +92,7 @@ fun SearchAppBar(
                 trailingIcon = {
                     if (query.isNotEmpty()) {
                         IconButton(onClick = { onQueryChange("") }) {
-                            Icon(Icons.Filled.Clear, contentDescription = "Clear Search")
+                            Icon(painter = painterResource(R.drawable.clear), contentDescription = "Clear Search")
                         }
                     }
                 },
@@ -113,7 +109,7 @@ fun SearchAppBar(
         },
         navigationIcon = {
             IconButton(onClick = onBackClicked) {
-                Icon(Icons.Filled.KeyboardArrowLeft, contentDescription = "Back")
+                Icon(painter = painterResource(R.drawable.back), contentDescription = "Back")
             }
         }
     )
@@ -127,7 +123,7 @@ fun InitialSearchPrompt() {
         verticalArrangement = Arrangement.Center
     ) {
         Icon(
-            Icons.Filled.Search,
+            painter = painterResource(R.drawable.search),
             contentDescription = "Search",
             modifier = Modifier.size(72.dp),
             tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
