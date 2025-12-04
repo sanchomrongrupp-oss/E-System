@@ -74,10 +74,15 @@ class SubjectScoreRecordActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        val cardTitle = intent.getStringExtra("card_title") ?: ""
+
         setContent {
             ESystemTheme {
-                // Start with the Subject List Screen
-                SubjectRecordNavigation(onActivityFinish = { finish() })
+                SubjectRecordNavigation(
+                    title = cardTitle,
+                    onActivityFinish = { finish() }
+                )
             }
         }
     }
@@ -85,12 +90,17 @@ class SubjectScoreRecordActivity : ComponentActivity() {
 
 // --- Navigation Composable (Manages screen switching) ---
 @Composable
-fun SubjectRecordNavigation(onActivityFinish: () -> Unit) {
-    // State to manage which screen is currently visible
-    var selectedSubject by remember { mutableStateOf<Subject?>(null) }
-
-    // Pass navigation logic to children
-    Crossfade(targetState = selectedSubject, label = "ScreenTransition") {
+fun SubjectRecordNavigation(
+    title: String,
+    onActivityFinish: () -> Unit
+) {
+    // ALWAYS show the score screen since the Activity already navigates here
+    Crossfade(targetState = true, label = "ScreenTransition") {
+        ScoreDetailScreen(
+            subjectName = title,
+            allSemesterData = mockSemesterData,
+            onBackClick = { onActivityFinish() }
+        )
     }
 }
 
@@ -100,17 +110,14 @@ fun ScoreDetailScreen(
     allSemesterData: List<SemesterScore>,
     onBackClick: () -> Unit
 ) {
-    // State Management for Semester Dropdown
     val semesters = allSemesterData.map { it.semester }
-    // Ensure initial selection is valid, or default to the first
     var selectedSemester by remember { mutableStateOf(semesters.firstOrNull() ?: "") }
 
     val currentScores = allSemesterData.firstOrNull { it.semester == selectedSemester }?.scoreList
         ?: emptyList()
 
     Scaffold(
-        // FIX: Use the subjectName for the toolbar title
-        topBar = { SimpleToolbar(subjectName, onBackClick) },
+        topBar = { SimpleToolbar(title = subjectName, onBackClick = onBackClick) },
         containerColor = Color(0xFFF7F7F7),
         modifier = Modifier.fillMaxSize()
     ) { innerPadding ->
@@ -127,7 +134,6 @@ fun ScoreDetailScreen(
                 modifier = Modifier.padding(top = 8.dp, bottom = 8.dp)
             )
 
-            // Show dropdown only if there are semesters
             if (semesters.isNotEmpty()) {
                 SemesterDropdown(
                     selectedSemester = selectedSemester,
@@ -137,8 +143,6 @@ fun ScoreDetailScreen(
                 Spacer(modifier = Modifier.height(16.dp))
             }
 
-
-            // Score Detail Card
             Card(
                 shape = RoundedCornerShape(12.dp),
                 elevation = CardDefaults.cardElevation(4.dp),
@@ -149,9 +153,13 @@ fun ScoreDetailScreen(
                     contentPadding = PaddingValues(vertical = 8.dp)
                 ) {
                     items(currentScores) { item ->
-                        ScoreItemRow(item = item)
+                        ScoreItemRow(item)
                         if (item != currentScores.last()) {
-                            Divider(color = Color(0xFFEEEEEE), thickness = 1.dp, modifier = Modifier.padding(horizontal = 16.dp))
+                            Divider(
+                                color = Color(0xFFEEEEEE),
+                                thickness = 1.dp,
+                                modifier = Modifier.padding(horizontal = 16.dp)
+                            )
                         }
                     }
                 }
@@ -289,9 +297,11 @@ fun SimpleToolbar(title: String, onBackClick: () -> Unit) {
         navigationIcon = {
             IconButton(onClick = onBackClick) {
                 Icon(
-                    painter = painterResource(R.drawable.back),
+                    painter = painterResource(R.drawable.back) ,
                     contentDescription = "Back",
-                    tint = Color.Black
+                    tint = Color.Black,
+                    modifier = Modifier
+                        .size(24.dp)
                 )
             }
         },
@@ -306,7 +316,7 @@ fun SimpleToolbar(title: String, onBackClick: () -> Unit) {
 fun ScoreDetailPreview() {
     ESystemTheme {
         ScoreDetailScreen(
-            subjectName = "Mobile App Score",
+            subjectName = "Mobile App",
             allSemesterData = mockSemesterData,
             onBackClick = {}
         )

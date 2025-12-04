@@ -1,6 +1,7 @@
 package com.example.e_system
 
 import android.R.attr.onClick
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -32,6 +33,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -56,6 +58,7 @@ class ScoreRecordActivity : ComponentActivity() {
 fun ScoreRecordScreen(
     onBackClicked: () -> Unit,
 ) {
+    val context = LocalContext.current
     Scaffold(
         topBar = {
             Column {
@@ -75,9 +78,11 @@ fun ScoreRecordScreen(
                     navigationIcon = {
                         IconButton(onClick = onBackClicked) {
                             Icon(
-                                painter = painterResource(R.drawable.back),
+                                painter = painterResource(R.drawable.back) ,
                                 contentDescription = "Back",
-                                tint = Color.Black
+                                tint = Color.Black,
+                                modifier = Modifier
+                                    .size(24.dp)
                             )
                         }
                     },
@@ -106,12 +111,48 @@ fun ScoreRecordScreen(
                 .padding(innerPadding)
         ) {
             // Main Content Area with a Card for the list
-            MenuCard("Mobile App",onClick={})
-            MenuCard("SE & IT",onClick={})
-            MenuCard("MIS",onClick={})
-            MenuCard("OOAD and Prog.",onClick={})
-            MenuCard("Windows Server",onClick={})
-            MenuCard("Academic Transcript",onClick={})
+            MenuCard("Mobile App",
+                onClick={
+                    val intent = Intent(context, SubjectScoreRecordActivity::class.java)
+                    intent.putExtra("card_title", "Mobile App")   // <-- send text here
+                    context.startActivity(intent)
+                }
+            )
+            MenuCard("SE & IT",
+                onClick={
+                    val intent = Intent(context, SubjectScoreRecordActivity::class.java)
+                    intent.putExtra("card_title", "SE & IT")   // <-- send text here
+                    context.startActivity(intent)
+                }
+            )
+            MenuCard("MIS",
+                onClick={
+                    val intent = Intent(context, SubjectScoreRecordActivity::class.java)
+                    intent.putExtra("card_title", "MIS")   // <-- send text here
+                    context.startActivity(intent)
+                }
+            )
+            MenuCard("OOAD and Prog.",
+                onClick={
+                    val intent = Intent(context, SubjectScoreRecordActivity::class.java)
+                    intent.putExtra("card_title", "OOAD and Prog.")   // <-- send text here
+                    context.startActivity(intent)
+                }
+            )
+            MenuCard("Windows Server",
+                onClick={
+                    val intent = Intent(context, SubjectScoreRecordActivity::class.java)
+                    intent.putExtra("card_title", "Windows Server")   // <-- send text here
+                    context.startActivity(intent)
+                }
+            )
+            MenuCard("Academic Transcript",
+                onClick={
+                    val intent = Intent(context, SubjectScoreRecordActivity::class.java)
+                    intent.putExtra("card_title", "Academic Transcript")   // <-- send text here
+                    context.startActivity(intent)
+                }
+            )
         }
     }
 }

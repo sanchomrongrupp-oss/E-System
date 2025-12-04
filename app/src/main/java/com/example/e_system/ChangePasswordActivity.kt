@@ -96,9 +96,11 @@ fun ChangePasswordScreen(
                 navigationIcon = {
                     IconButton(onClick = onBackClicked) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            painter = painterResource(R.drawable.back) ,
                             contentDescription = "Back",
-                            tint = Color.Black
+                            tint = Color.Black,
+                            modifier = Modifier
+                                .size(24.dp)
                         )
                     }
                 },
