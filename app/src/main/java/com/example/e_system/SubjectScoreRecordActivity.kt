@@ -22,6 +22,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -41,16 +42,6 @@ data class ScoreItem(
 data class SemesterScore(
     val semester: String,
     val scoreList: List<ScoreItem>
-)
-
-// --- Mock Data ---
-private val mockSubjectList = listOf(
-    Subject("Mobile App"),
-    Subject("SE & IT"),
-    Subject("MIS"),
-    Subject("OOAD"),
-    Subject("Windows Server"),
-    Subject("Academic Transcript", isTranscript = true)
 )
 
 private val mockSemesterData = listOf(
@@ -99,124 +90,9 @@ fun SubjectRecordNavigation(onActivityFinish: () -> Unit) {
     var selectedSubject by remember { mutableStateOf<Subject?>(null) }
 
     // Pass navigation logic to children
-    Crossfade(targetState = selectedSubject, label = "ScreenTransition") { subject ->
-        if (subject == null) {
-            SubjectListScreen(
-                subjects = mockSubjectList,
-                onSubjectClick = { s -> selectedSubject = s },
-                // Back button on the list screen finishes the activity
-                onBackClick = onActivityFinish
-            )
-        } else {
-            // The ScoreDetailScreen only shows if the selectedSubject is not null
-            ScoreDetailScreen(
-                subjectName = subject.name,
-                allSemesterData = mockSemesterData,
-                // Back button on the detail screen returns to the list
-                onBackClick = { selectedSubject = null }
-            )
-        }
+    Crossfade(targetState = selectedSubject, label = "ScreenTransition") {
     }
 }
-
-// -----------------------------------------------------------------------------
-// 1. Subject List Screen (List View)
-// -----------------------------------------------------------------------------
-
-@Composable
-fun SubjectListScreen(
-    subjects: List<Subject>,
-    onSubjectClick: (Subject) -> Unit,
-    onBackClick: () -> Unit
-) {
-    Scaffold(
-        topBar = { SimpleToolbar("Score Record", onBackClick) },
-        containerColor = Color(0xFFF7F7F7), // Light gray background
-        modifier = Modifier.fillMaxSize()
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(horizontal = 16.dp)
-        ) {
-            Text(
-                text = "Subjects",
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(top = 8.dp, bottom = 16.dp)
-            )
-
-            Card(
-                shape = RoundedCornerShape(12.dp),
-                elevation = CardDefaults.cardElevation(4.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                LazyColumn(
-                    contentPadding = PaddingValues(vertical = 8.dp)
-                ) {
-                    items(subjects) { subject ->
-                        SubjectRow(subject = subject, onClick = { onSubjectClick(subject) })
-                        if (subject != subjects.last()) {
-                            Divider(color = Color(0xFFEEEEEE), thickness = 1.dp, modifier = Modifier.padding(horizontal = 16.dp))
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-// Note: Replace R.drawable.transcript and R.drawable.subject with actual drawable files or appropriate Material Icons
-@Composable
-fun SubjectRow(subject: Subject, onClick: () -> Unit) {
-    // Using simple icons since custom drawables are not available
-    val icon = if (subject.isTranscript) Icons.Default.Check else Icons.AutoMirrored.Filled.KeyboardArrowRight
-    val color = if (subject.isTranscript) Color(0xFF1B5E20) else Color.Black
-    val iconTint = if (subject.isTranscript) Color(0xFF1B5E20) else Color.Gray
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(vertical = 12.dp, horizontal = 16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            // Placeholder for the icon using a Material Icon
-            Box(
-                modifier = Modifier
-                    .size(28.dp)
-                    .background(Color(0xFFF5F5F5), RoundedCornerShape(4.dp)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = icon, // Using a generic icon for demonstration
-                    contentDescription = subject.name,
-                    tint = iconTint.copy(alpha = 0.8f),
-                    modifier = Modifier.size(18.dp)
-                )
-            }
-            Spacer(Modifier.width(16.dp))
-            Text(
-                text = subject.name,
-                fontSize = 16.sp,
-                color = color
-            )
-        }
-        Icon(
-            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-            contentDescription = "Details",
-            tint = Color.Gray
-        )
-    }
-}
-
-// -----------------------------------------------------------------------------
-// 2. Score Detail Screen (Detail View)
-// -----------------------------------------------------------------------------
 
 @Composable
 fun ScoreDetailScreen(
@@ -398,11 +274,6 @@ fun SemesterDropdown(
         }
     }
 }
-
-
-// -----------------------------------------------------------------------------
-// 3. Reusable Toolbar
-// -----------------------------------------------------------------------------
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SimpleToolbar(title: String, onBackClick: () -> Unit) {
@@ -418,7 +289,7 @@ fun SimpleToolbar(title: String, onBackClick: () -> Unit) {
         navigationIcon = {
             IconButton(onClick = onBackClick) {
                 Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    painter = painterResource(R.drawable.back),
                     contentDescription = "Back",
                     tint = Color.Black
                 )
@@ -428,18 +299,6 @@ fun SimpleToolbar(title: String, onBackClick: () -> Unit) {
             containerColor = Color.White
         )
     )
-}
-
-// -----------------------------------------------------------------------------
-// 4. Previews
-// -----------------------------------------------------------------------------
-
-@Preview(showBackground = true)
-@Composable
-fun SubjectListPreview() {
-    ESystemTheme {
-        SubjectListScreen(subjects = mockSubjectList, onSubjectClick = {}, onBackClick = {})
-    }
 }
 
 @Preview(showBackground = true)
