@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools">
+
+    <application
+            android:allowBackup="true"
+            android:dataExtractionRules="@xml/data_extraction_rules"
+            android:fullBackupContent="@xml/backup_rules"
+            android:icon="@mipmap/ic_launcher"
+            android:label="@string/app_name"
+            android:roundIcon="@mipmap/ic_launcher_round"
+            android:supportsRtl="true"
+            android:theme="@style/Theme.ESystem"
+            tools:targetApi="31">
+        <activity
+                android:name=".SubjectScoreRecordActivity"
+                android:exported="false"
+                android:label="@string/title_activity_subject_score_record"
+                android:theme="@style/Theme.ESystem" />
+        <activity
+                android:name=".AboutAppActivity"
+                android:exported="false"
+                android:label="@string/title_activity_about_app"
+                android:theme="@style/Theme.ESystem" />
+        <activity
+                android:name=".ChangePasswordActivity"
+                android:exported="false"
+                android:label="@string/title_activity_change_password"
+                android:theme="@style/Theme.ESystem" />
+        <activity
+                android:name=".ContactSchoolActivity"
+                android:exported="false"
+                android:label="@string/title_activity_contact_school"
+                android:theme="@style/Theme.ESystem" />
+        <activity
+                android:name=".AttRecordActivity"
+                android:exported="false"
+                android:label="@string/title_activity_att_record"
+                android:theme="@style/Theme.ESystem" />
+        <activity
+                android:name=".ScoreRecordActivity"
+                android:exported="false"
+                android:label="@string/title_activity_score_record"
+                android:theme="@style/Theme.ESystem" />
+        <activity
+                android:name=".SearchActivity"
+                android:exported="false"
+                android:label="@string/title_activity_search"
+                android:theme="@style/Theme.ESystem" />
+        <activity
+                android:name=".MyAccountActivity"
+                android:exported="true"
+                android:label="@string/title_activity_my_account"
+                android:theme="@style/Theme.ESystem" />
+        <activity
+                android:name=".NotificationActivity"
+                android:exported="true"
+                android:label="@string/title_activity_notification"
+                android:theme="@style/Theme.ESystem" />
+        <activity
+                android:name=".AIChatActivity"
+                android:exported="true"
+                android:label="@string/title_activity_aichat"
+                android:theme="@style/Theme.ESystem" />
+        <activity
+                android:name=".SplashActivity"
+                android:exported="true"
+                android:label="@string/title_activity_splash"
+                android:theme="@style/Theme.ESystem">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity> <!-- Intro Screens -->
+        <activity
+                android:name=".IntroFirstActivity"
+                android:exported="true"
+                android:label="@string/title_activity_intro_first" />
+        <activity
+                android:name=".IntroSecondActivity"
+                android:exported="true"
+                android:label="@string/title_activity_intro_second" />
+        <activity
+                android:name=".IntroThirdActivity"
+                android:exported="true"
+                android:label="@string/title_activity_intro_third" /> <!-- Sign In -->
+        <activity
+                android:name=".SigInActivity"
+                android:exported="true"
+                android:label="@string/title_activity_sign_in" /> <!-- Home -->
+        <activity
+                android:name=".HomeActivity"
+                android:exported="true"
+                android:label="@string/title_activity_home" /> <!-- Exercise -->
+        <activity
+                android:name=".ExerciseActivity"
+                android:exported="true"
+                android:label="@string/title_activity_exercise" /> <!-- Attendance -->
+        <activity
+                android:name=".AttendanceActivity"
+                android:exported="true"
+                android:label="@string/title_activity_attendance" /> <!-- Profile -->
+        <activity
+                android:name=".ProfileActivity"
+                android:exported="true"
+                android:label="@string/title_activity_profile" /> <!-- Main Activity -->
+        <activity
+                android:name=".MainActivity"
+                android:exported="true"
+                android:label="@string/title_activity_main" />
+    </application>
+
+</manifest>
