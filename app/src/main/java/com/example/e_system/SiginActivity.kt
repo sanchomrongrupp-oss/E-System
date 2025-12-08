@@ -139,6 +139,9 @@ fun SigInScreen( onSignIn: () -> Unit) {
             visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
         )
+        TextButton(onClick = {}) {
+            Text("Forget Password?")
+        }
 
         Spacer(modifier = Modifier.height(32.dp))
 

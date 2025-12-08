@@ -186,7 +186,7 @@ fun ChangePasswordScreen(
                 )
                 Spacer(modifier = Modifier.size(8.dp))
                 Icon(
-                    imageVector = Icons.AutoMirrored.Filled.Send,
+                    painter = painterResource(R.drawable.send),
                     contentDescription = null,
                     tint = Color.White,
                     modifier = Modifier.size(20.dp)
@@ -256,9 +256,7 @@ fun InputField(
     OutlinedTextField(
         value = value,
         onValueChange = { /* Only changes if not readOnly */ },
-        label = if (label.isNotEmpty()) {
-            @Composable { Text(label) }
-        } else null,
+        label = {Text("Enter Email")},
         readOnly = isReadOnly,
         modifier = Modifier.fillMaxWidth(),
         leadingIcon = {
@@ -343,7 +341,7 @@ fun PasswordInputField(
 fun ChangePasswordScreenPreview() {
     ESystemTheme {
         ChangePasswordScreen(
-            currentEmail = "meng11@gmail.com",
+            currentEmail = "",
             onBackClicked = {},
             onPasswordChanged = { _, _ -> }
         )

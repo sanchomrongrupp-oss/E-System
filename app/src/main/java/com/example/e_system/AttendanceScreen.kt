@@ -212,7 +212,9 @@ fun StatusBox(label: String, color: Color, imageres: Int, count: Int, modifier: 
 @Composable
 fun AttendanceItem(date: String, name: String, status: String, color: Color) {
     Column(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp)
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 6.dp)
     ) {
         Text(text = date, fontSize = 16.sp, modifier = Modifier.padding(start = 4.dp))
         Row(

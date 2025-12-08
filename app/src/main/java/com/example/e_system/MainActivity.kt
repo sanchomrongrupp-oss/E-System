@@ -56,7 +56,11 @@ fun MainScreen(navController: NavHostController) {
                 modifier = Modifier.padding(innerPadding)
             ) {
                 composable(Screen.Home.route) { HomeScreen() }
-                composable(Screen.Exercise.route) { ExerciseScreen() }
+                composable(Screen.Exercise.route) { ExerciseScreen(
+                    onSendClick = {},
+                    onFileSelected = {},
+                    onBackClick = {},)
+                }
                 composable(Screen.Attendance.route) { AttendanceScreen() }
             }
         }

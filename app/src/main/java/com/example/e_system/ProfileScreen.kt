@@ -161,26 +161,43 @@ fun ProfileScreen(
                     Spacer(modifier = Modifier.height(16.dp))
                 }
             }
-
             // Profile Image overlapping card
             Box(
+                // This Box will contain both the image and the edit button
                 modifier = Modifier
-                    .offset(y = (-50).dp)
-                    .align(Alignment.TopCenter)
-                    .padding(top = 100.dp)
-                    .size(120.dp),
+                    .size(120.dp)
+                    .align(Alignment.TopCenter) // <--- THIS IS THE FIX
+                    .offset(y = 40.dp), // Optional: Lower it slightly for better overlap/visual positioning
                 contentAlignment = Alignment.Center
             ) {
+                // 1. Profile Image
                 Image(
-                    // Note: If you don't have R.drawable.vanda, replace it with a placeholder image
                     painter = painterResource(id = R.drawable.vanda),
                     contentDescription = "Profile Image",
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
-                        .size(120.dp)
+                        .matchParentSize() // Image takes the size of the Box (120.dp)
                         .clip(CircleShape)
-                        .background(Color.White)
+                        .background(Color.White),
                 )
+
+                // 2. Edit Icon Button (placed on top of the Image)
+                IconButton(
+                    onClick = { /* TODO: handle edit profile click */ },
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd) // Positions the button in the bottom-right corner of the Box
+                        .size(36.dp) // Slightly larger size for the button area
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.user_edit),
+                        contentDescription = "Edit Profile",
+                        modifier = Modifier
+                            .size(30.dp)
+                            // Optional: You can add a background to the icon to make it stand out more
+                            .background(Color.White, CircleShape)
+                            .padding(2.dp)
+                    )
+                }
             }
         }
     }
@@ -195,10 +212,8 @@ fun ProfileScreen(
             }
         )
     }
-    // --------------------------------
 }
 
-// --- LOGOUT DIALOG FUNCTION ---
 @Composable
 fun LogoutDialog(onDismiss: () -> Unit, onConfirm: () -> Unit) {
     AlertDialog(
@@ -212,15 +227,6 @@ fun LogoutDialog(onDismiss: () -> Unit, onConfirm: () -> Unit) {
                     style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
                 )
                 Spacer(modifier = Modifier.weight(1f))
-//                IconButton(onClick = onDismiss) {
-//                    // Using a standard close icon (X)
-//                    Icon(
-//                        painter = painterResource(id = R.drawable.absent), // Assuming R.drawable.close_icon exists
-//                        contentDescription = "Close",
-//                        tint = Color.Gray,
-//                        modifier = Modifier.size(24.dp)
-//                    )
-//                }
             }
         },
         text = {
