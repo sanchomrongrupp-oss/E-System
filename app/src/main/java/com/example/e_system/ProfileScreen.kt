@@ -1,5 +1,6 @@
 package com.example.e_system
 
+import android.content.Context
 import android.content.Intent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -30,6 +31,56 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import okhttp3.OkHttpClient
+import retrofit2.Response
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.http.GET
+
+data class StudentdentProfile(
+    val _id: String,
+    val role: String,
+    val fullName: String,
+    val nameKh: String,
+    val gender: String,
+    val dateOfBirth: String,
+    val placeOfBirth: String,
+    val phone: String,
+    val occupation: String,
+    val address: String,
+    val nationality: String,
+    val email: String,
+    val studentId: String,
+    val studyShift: String
+)
+
+interface ApiServicestudentprofile {
+    @GET("api/v1/student/me")
+    suspend fun getStudentMe(): Response<StudentdentProfile>
+}
+object RetrofitClientstudentprofile {
+    private const val BASE_URL = "http://10.0.2.2:4000/"
+
+    fun getClient(context: Context): ApiServicestudentprofile {
+        val httpClient = OkHttpClient.Builder()
+            .addInterceptor { chain ->
+                val token = TokenManager(context).getToken()
+                val requestBuilder = chain.request().newBuilder()
+                if (!token.isNullOrEmpty()) {
+                    requestBuilder.addHeader("Authorization", "Bearer $token")
+                }
+                chain.proceed(requestBuilder.build())
+            }
+            .build()
+
+        return Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .addConverterFactory(GsonConverterFactory.create())
+            .client(httpClient)
+            .build()
+            .create(ApiServicestudentprofile::class.java)
+    }
+}
 
 class ProfileActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

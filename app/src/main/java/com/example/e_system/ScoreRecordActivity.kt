@@ -1,10 +1,10 @@
 package com.example.e_system
 
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -12,259 +12,461 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.e_system.ui.theme.ESystemTheme
-import java.net.URLEncoder
-import java.nio.charset.StandardCharsets
 
-// --- Data Class for Subjects ---
-data class Subjected(
-    val name: String,
-    val academicYear: String,
-    val isTranscript: Boolean = false
+// --- Data Models for Mock Data ---
+data class Subject(val name: String, val isTranscript: Boolean = false)
+
+data class ScoreItem(
+    val title: String,
+    val weight: String,
+    val score: Double,
+    val isTotal: Boolean = false,
+    val gradeValue: String? = null // Added for explicit grade display
 )
 
-// --- Define Routes (for demonstration) ---
-object ScoreRoutes {
-    const val SUBJECT_DETAIL = "subject_detail/{subjectName}"
-    const val ACADEMIC_TRANSCRIPT = "academic_transcript"
-}
-
-// --- List of subjects to display (MOCKED DATA with all years) ---
-val allSubjectsList = listOf(
-    Subjected("Mobile App", "Academic Year: 4"),
-    Subjected("SE & IT", "Academic Year: 4"),
-    Subjected("MIS", "Academic Year: 4"),
-    Subjected("OOAD", "Academic Year: 4"),
-    Subjected("Windows Server", "Academic Year: 4"),
-    Subjected("Academic Transcript", "Academic Year: 4", isTranscript = true) // Keeping transcript here
+data class SemesterScore(
+    val semester: String,
+    val scoreList: List<ScoreItem>
 )
 
-// Group subjects by year and sort by year descending (4, then 1)
-val groupedSubjects = allSubjectsList
-    .groupBy { it.academicYear }
-    .toSortedMap(compareByDescending { it.substringAfter(": ").toIntOrNull() ?: 0 })
+// --- Mock Data ---
+private val mockSubjectList = listOf(
+    Subject("Mobile App"),
+    Subject("SE & IT"),
+    Subject("MIS"),
+    Subject("OOAD"),
+    Subject("Windows Server"),
+    Subject("Academic Transcript", isTranscript = true)
+)
 
+private val mockSemesterData = listOf(
+    SemesterScore(
+        semester = "Semester 1",
+        scoreList = listOf(
+            ScoreItem("Attendances", "10%", 10.0),
+            ScoreItem("Assignment", "10%", 4.0),
+            ScoreItem("Midterm", "20%", 15.0),
+            ScoreItem("Final", "60%", 45.50),
+            ScoreItem("Total Score", "100%", 74.50, isTotal = true),
+            ScoreItem("Grade", "", 0.0, gradeValue = "C") // Explicit grade
+        )
+    ),
+    SemesterScore(
+        semester = "Semester 2",
+        scoreList = listOf(
+            ScoreItem("Attendances", "10%", 8.5),
+            ScoreItem("Assignment", "10%", 9.0),
+            ScoreItem("Midterm", "20%", 18.0),
+            ScoreItem("Final", "60%", 50.0),
+            ScoreItem("Total Score", "100%", 85.50, isTotal = true),
+            ScoreItem("Grade", "", 0.0, gradeValue = "B")
+        )
+    )
+)
 
-// The Activity remains unchanged
+// --- Activity Setup ---
 class ScoreRecordActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-
         setContent {
             ESystemTheme {
-                ScoreRecordScreen(
-                    onBackClicked = { finish() },
-                    onSubjectClicked = { subjectName ->
-                        // **ROUTING LOGIC** (Placeholder for Navigation)
-                        val route = if (subjectName == "Academic Transcript") {
-                            ScoreRoutes.ACADEMIC_TRANSCRIPT
-                        } else {
-                            val encodedSubjectName = URLEncoder.encode(subjectName, StandardCharsets.UTF_8.toString())
-                            ScoreRoutes.SUBJECT_DETAIL.replace("{subjectName}", encodedSubjectName)
-                        }
-
-                        // In a real app, this would use an Intent or NavController to switch screens.
-                        Log.d("Navigation", "Navigating to route: $route")
-                    }
-                )
+                ScoreRecordNavigation(onActivityFinish = { finish() })
             }
         }
     }
 }
 
+// --- Navigation Composable (Manages screen switching) ---
+@Composable
+fun ScoreRecordNavigation(onActivityFinish: () -> Unit) {
+    var selectedSubject by remember { mutableStateOf<Subject?>(null) }
+
+    Crossfade(targetState = selectedSubject, label = "ScreenTransition") { subject ->
+        if (subject == null) {
+            SubjectListScreen(
+                subjects = mockSubjectList,
+                onSubjectClick = { s -> selectedSubject = s },
+                onBackClick = onActivityFinish
+            )
+        } else {
+            ScoreDetailScreen(
+                subjectName = subject.name,
+                allSemesterData = mockSemesterData,
+                onBackClick = { selectedSubject = null }
+            )
+        }
+    }
+}
+
 // -----------------------------------------------------------------------------
-// 1. Main Screen Composable (Grouped by Year with Scrolling Headers)
+// 1. Subject List Screen (List View) - No changes needed, already good.
 // -----------------------------------------------------------------------------
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ScoreRecordScreen(
-    onBackClicked: () -> Unit,
-    onSubjectClicked: (String) -> Unit
+fun SubjectListScreen(
+    subjects: List<Subject>,
+    onSubjectClick: (Subject) -> Unit,
+    onBackClick: () -> Unit
 ) {
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "Score Record",
-                        style = MaterialTheme.typography.headlineSmall,
-                        color = Color.Black
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBackClicked) {
-                        Icon(
-                            painter = painterResource(R.drawable.back),
-                            contentDescription = "Back",
-                            tint = Color.Black,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.White
-                )
-            )
-        },
-        containerColor = Color(0xFFF7F7F7) // Light gray background
+        topBar = { SimpleToolbar("Score Record", onBackClick) },
+        containerColor = Color(0xFFF7F7F7),
+        modifier = Modifier.fillMaxSize()
     ) { innerPadding ->
-        LazyColumn(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp) // Space between elements/groups
+                .padding(horizontal = 16.dp)
         ) {
-            // Iterate over the grouped subjects (keys are academic years)
-            groupedSubjects.forEach { (academicYear, subjects) ->
-                item {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    // **Academic Year/Semester Header Card** - Scrolls with content
-                    YearHeaderCard(year = academicYear)
-                }
+            Text(
+                text = "Subjects",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(top = 8.dp, bottom = 16.dp)
+            )
 
-                // Group the actual subject items under the header
-                items(subjects) { subject ->
-                    SubjectCardItem( // Each subject gets its own card
-                        subject = subject,
-                        onClick = { onSubjectClicked(subject.name) }
-                    )
-                }
-
-                // Add a bigger space between different academic year groups
-                item {
-                    Spacer(modifier = Modifier.height(16.dp))
+            Card(
+                shape = RoundedCornerShape(12.dp),
+                elevation = CardDefaults.cardElevation(4.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                LazyColumn(
+                    contentPadding = PaddingValues(vertical = 8.dp)
+                ) {
+                    items(subjects) { subject ->
+                        SubjectRow(subject = subject, onClick = { onSubjectClick(subject) })
+                        if (subject != subjects.last()) {
+                            Divider(color = Color(0xFFEEEEEE), thickness = 2.dp, modifier = Modifier.padding(horizontal = 16.dp))
+                        }
+                    }
                 }
             }
         }
     }
 }
 
-// -----------------------------------------------------------------------------
-// 2. Year Header Card (Scrolls with list)
-// -----------------------------------------------------------------------------
 @Composable
-fun YearHeaderCard(year: String) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFE0E0E0)), // Light gray background for header
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 12.dp, horizontal = 16.dp),
-            contentAlignment = Alignment.CenterStart
-        ) {
-            Text(
-                text = year,
-                color = Color.Black,
-                fontWeight = FontWeight.Bold,
-                fontSize = 16.sp
-            )
-        }
-    }
-}
-
-// -----------------------------------------------------------------------------
-// 3. Subject Card Item (Individual Card for each subject)
-// -----------------------------------------------------------------------------
-@Composable
-fun SubjectCardItem(subject: Subjected, onClick: () -> Unit) {
-    Card(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), // Padding to separate from other subject cards/headers
-        shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
-    ) {
-        // The content inside this card is the SubjectListItem
-        SubjectListItem(subject = subject, onClick = onClick)
-    }
-}
-
-// -----------------------------------------------------------------------------
-// 4. Reusable Item Composable (List Row content)
-// -----------------------------------------------------------------------------
-@Composable
-fun SubjectListItem(subject: Subjected, onClick: () -> Unit) {
-    // Define colors based on whether it's the Academic Transcript
-    val textColor = if (subject.isTranscript) Color(0xFF1B5E20) else Color.Black
-    val iconTint = if (subject.isTranscript) Color(0xFF1B5E20) else Color(0xFFBDBDBD)
+fun SubjectRow(subject: Subject, onClick: () -> Unit) {
+    val leadingIcon: Painter = if (subject.isTranscript) painterResource(R.drawable.check) else painterResource(R.drawable.next)
+    val color = if (subject.isTranscript) Color(0xFF1B5E20) else Color.Black
+    val iconTint = if (subject.isTranscript) Color(0xFF1B5E20) else Color.Gray
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick) // Clickable on the whole row inside the card
-            .padding(horizontal = 16.dp, vertical = 16.dp),
+            .clickable(onClick = onClick)
+            .padding(vertical = 12.dp, horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        // Left Side: Icon and Text
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier
+                    .size(28.dp)
+                    .background(Color(0xFFF5F5F5), RoundedCornerShape(4.dp)),
+                contentAlignment = Alignment.Center
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(24.dp)
-                        .background(
-                            color = Color(0xFFF5F5F5),
-                            shape = RoundedCornerShape(4.dp)
-                        )
-                        .padding(4.dp)
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.document),
-                        contentDescription = "Document Icon",
-                        tint = iconTint,
-                        modifier = Modifier
-                            .size(16.dp)
-                            .align(Alignment.Center)
-                    )
-                }
+                Icon(
+                    painter = leadingIcon,
+                    contentDescription = subject.name,
+                    tint = iconTint.copy(alpha = 0.8f),
+                    modifier = Modifier.size(18.dp)
+                )
             }
-
-            Spacer(modifier = Modifier.size(16.dp))
-
-            // Subject name only (year is in the header card)
+            Spacer(Modifier.width(16.dp))
             Text(
                 text = subject.name,
-                color = textColor,
-                style = MaterialTheme.typography.bodyLarge
+                fontSize = 16.sp,
+                color = color
             )
         }
-
-        // Right Side: Navigation Arrow
         Icon(
             painter = painterResource(R.drawable.next),
-            contentDescription = "Navigate",
-            tint = Color(0xFFC0C0C0)
+            contentDescription = "Details",
+            tint = Color.Gray
         )
     }
 }
 
 // -----------------------------------------------------------------------------
-// 5. Preview
+// 2. Score Detail Screen (Detail View) - **UPDATED** to match image
 // -----------------------------------------------------------------------------
+
+@Composable
+fun ScoreDetailScreen(
+    subjectName: String,
+    allSemesterData: List<SemesterScore>,
+    onBackClick: () -> Unit
+) {
+    val semesters = allSemesterData.map { it.semester }
+    var selectedSemester by remember { mutableStateOf(semesters.firstOrNull() ?: "") }
+
+    val currentScores = allSemesterData.firstOrNull { it.semester == selectedSemester }?.scoreList
+        ?: emptyList()
+
+    Scaffold(
+        topBar = { SimpleToolbar(subjectName, onBackClick) }, // Subject name in toolbar
+        containerColor = Color(0xFFF7F7F7),
+        modifier = Modifier.fillMaxSize()
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(horizontal = 16.dp)
+        ) {
+            Spacer(modifier = Modifier.height(8.dp)) // Add some space below toolbar
+
+            // **UPDATED**: Header combining "Score Details" with selected semester
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Score Details: ",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black
+                )
+                // **UPDATED**: Semester Dropdown for styling
+                SemesterDropdownStyled(
+                    selectedSemester = selectedSemester,
+                    semesters = semesters,
+                    onSemesterSelected = { selectedSemester = it }
+                )
+            }
+
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Score Detail Card (Main content card)
+            Card(
+                shape = RoundedCornerShape(12.dp),
+                // **UPDATED**: Shadow color closer to image
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                modifier = Modifier.fillMaxWidth().background(Color(0xFFE3F2FD), RoundedCornerShape(12.dp)) // Light blue background for the card
+            ) {
+                // **UPDATED**: Padding for the entire card content, no lazy column padding
+                Column(modifier = Modifier.padding(vertical = 8.dp)) {
+                    currentScores.forEachIndexed { index, item ->
+                        ScoreItemRow(item = item)
+                        // **REMOVED**: No dividers between items in the image
+                        // if (item != currentScores.last()) {
+                        //     Divider(color = Color(0xFFEEEEEE), thickness = 1.dp, modifier = Modifier.padding(horizontal = 16.dp))
+                        // }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// **UPDATED**: ScoreItemRow for grade logic and alignment
+@Composable
+fun ScoreItemRow(item: ScoreItem) {
+    val scoreColor = when {
+        item.title == "Grade" -> Color(0xFF1B5E20) // Deep Green
+        item.score < 50.0 && !item.isTotal -> Color.Red
+        item.isTotal -> Color(0xFF1B5E20) // Deep Green for Total Score
+        else -> Color(0xFF1B5E20) // Default green for other scores
+    }
+
+    val displayScore = when (item.title) {
+        "Grade" -> item.gradeValue ?: "N/A" // Use gradeValue if available
+        else -> String.format("%.1f", item.score) // Format to one decimal place
+    }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 12.dp, horizontal = 16.dp), // Adjust padding as needed
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween // Distribute space
+    ) {
+        // Left side: Icon and Title
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                painter = painterResource(R.drawable.check),
+                contentDescription = "Checked",
+                tint = Color(0xFF1B5E20), // Green checkmark
+                modifier = Modifier.size(20.dp) // Smaller icon
+            )
+            Spacer(Modifier.width(12.dp)) // Smaller spacer
+            Text(
+                text = item.title,
+                fontSize = 15.sp, // Slightly smaller font
+                fontWeight = if (item.isTotal || item.title == "Grade") FontWeight.Bold else FontWeight.Normal,
+                color = Color.Black
+            )
+        }
+
+        // Right side: Weight and Score
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            if (item.weight.isNotEmpty()) {
+                Text(
+                    text = item.weight,
+                    fontSize = 15.sp, // Match title font size
+                    color = Color.Gray,
+                    modifier = Modifier.width(40.dp) // Fixed width for weight alignment
+                )
+            }
+            // Spacer here if weight is present, to push score to the right
+            if (item.weight.isNotEmpty()) {
+                Spacer(Modifier.width(16.dp))
+            }
+
+            Text(
+                text = displayScore,
+                fontSize = 15.sp, // Match title font size
+                fontWeight = FontWeight.Bold,
+                color = scoreColor,
+                modifier = Modifier.width(50.dp), // Fixed width for score alignment
+            )
+        }
+    }
+}
+
+
+// **NEW/UPDATED**: Styled Semester Dropdown to match the image
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SemesterDropdownStyled(
+    selectedSemester: String,
+    semesters: List<String>,
+    onSemesterSelected: (String) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Box(
+        modifier = Modifier
+            .wrapContentSize(Alignment.TopStart)
+            .height(IntrinsicSize.Min) // Allow children to define min height
+    ) {
+        Card(
+            shape = RoundedCornerShape(8.dp),
+            onClick = { expanded = true },
+            colors = CardDefaults.cardColors(containerColor = Color.White), // White background for the dropdown trigger
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+            modifier = Modifier
+                .width(150.dp) // Fixed width for dropdown
+                .height(35.dp) // Fixed height for dropdown
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 8.dp) // Adjust padding inside the card
+            ) {
+                Text(
+                    text = selectedSemester,
+                    fontSize = 15.sp, // Smaller font for dropdown text
+                    fontWeight = FontWeight.Medium,
+                    color = Color.Black, // Black text
+                    maxLines = 1,
+                    modifier = Modifier.weight(1f)
+                )
+                Icon(
+                    painter = if (expanded) painterResource(R.drawable.arrow_up) else painterResource(R.drawable.drop_down),
+                    contentDescription = "Expand",
+                    tint = Color.Gray,
+                    modifier = Modifier.size(20.dp) // Smaller icon
+                )
+            }
+        }
+
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            modifier = Modifier.width(150.dp) // Match the width of the Card
+        ) {
+            semesters.forEach { semester ->
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            semester,
+                            fontSize = 15.sp, // Match dropdown item font
+                            color = Color.Black
+                        )
+                    },
+                    onClick = {
+                        onSemesterSelected(semester)
+                        expanded = false
+                    }
+                )
+            }
+        }
+    }
+}
+
+
+// -----------------------------------------------------------------------------
+// 3. Reusable Toolbar - No changes needed, already good.
+// -----------------------------------------------------------------------------
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SimpleToolbar(title: String, onBackClick: () -> Unit) {
+    TopAppBar(
+        title = {
+            Text(
+                title,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Medium,
+                color = Color.Black
+            )
+        },
+        navigationIcon = {
+            IconButton(onClick = onBackClick) {
+                Icon(
+                    painter = painterResource(R.drawable.back),
+                    contentDescription = "Back",
+                    tint = Color.Black,
+                    modifier = Modifier
+                        .size(24.dp)
+                )
+            }
+        },
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = Color.White
+        )
+    )
+}
+
+// -----------------------------------------------------------------------------
+// 4. Previews
+// -----------------------------------------------------------------------------
+
 @Preview(showBackground = true)
 @Composable
-fun ScoreRecordScreenPreview() {
+fun SubjectListPreview() {
     ESystemTheme {
-        ScoreRecordScreen(
-            onBackClicked = {},
-            onSubjectClicked = {}
+        SubjectListScreen(subjects = mockSubjectList, onSubjectClick = {}, onBackClick = {})
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun ScoreDetailPreview() {
+    ESystemTheme {
+        ScoreDetailScreen(
+            subjectName = "Mobile App", // Subject name to display in toolbar
+            allSemesterData = mockSemesterData,
+            onBackClick = {}
         )
     }
 }

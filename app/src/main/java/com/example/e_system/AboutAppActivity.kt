@@ -56,7 +56,13 @@ fun AboutAppScreen(onBackClick: () -> Unit) {
                 },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(painter = painterResource(R.drawable.back), contentDescription = "Back")
+                        Icon(
+                            painter = painterResource(R.drawable.back),
+                            contentDescription = "Back",
+                            tint = Color.Black,
+                            modifier = Modifier
+                                .size(24.dp)
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(

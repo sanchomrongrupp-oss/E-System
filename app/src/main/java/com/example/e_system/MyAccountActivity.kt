@@ -129,7 +129,9 @@ fun MyAccountScreen(onBackClick: () -> Unit) {
                         Icon(
                             painter = painterResource(R.drawable.back) ,
                             contentDescription = "Back",
-                            tint = Color.Black
+                            tint = Color.Black,
+                            modifier = Modifier
+                                .size(24.dp)
                         )
                     }
                 },
