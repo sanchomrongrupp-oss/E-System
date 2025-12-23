@@ -28,7 +28,7 @@ import java.io.File
 
 
 // Replace with your actual application ID from build.gradle
-private const val FILE_PROVIDER_AUTHORITY = "com.example.e_system.fileprovider"
+const val FILE_PROVIDER_AUTHORITY = "com.example.e_system.fileprovider"
 
 class AIChatActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

@@ -75,7 +75,7 @@ fun AttendanceScreen() {
             }
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(32.dp))
 
         // Responsive Dropdown
         ExposedDropdownMenuBox(
