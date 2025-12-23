@@ -1,7 +1,10 @@
 package com.example.e_system
 
+import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
@@ -23,26 +26,118 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.lifecycleScope
 import com.example.e_system.ui.theme.ESystemTheme
+import kotlinx.coroutines.launch
+import okhttp3.OkHttpClient
+import retrofit2.Response
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.http.Body
+import retrofit2.http.POST
+import okhttp3.logging.HttpLoggingInterceptor
 
+
+// --- 1. TOKEN MANAGER (Sync with MyAccountActivity) ---
+class TokenManager(context: Context) {
+    private val prefs: SharedPreferences =
+        context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
+
+    fun saveToken(token: String) {
+        prefs.edit().putString("jwt_token", token).apply()
+    }
+
+    fun getToken(): String? = prefs.getString("jwt_token", null)
+
+    fun clear() = prefs.edit().clear().apply()
+}
+
+// --- 2. DATA MODELS ---
+data class LoginRequest(val email: String, val password: String)
+data class UserData(val _id: String, val fullName: String, val email: String, val role: String)
+data class LoginResponse(val token: String, val user: UserData)
+
+// --- 3. API SERVICE ---
+interface ApiService {
+    @POST("api/v1/auth/login")
+    suspend fun login(@Body request: LoginRequest): Response<LoginResponse>
+}
+
+// --- 4. RETROFIT CLIENT ---
+object RetrofitClient {
+    private const val BASE_URL = "http://10.0.2.2:4000/"
+
+    private val logging = HttpLoggingInterceptor().apply {
+        level = HttpLoggingInterceptor.Level.BODY
+    }
+
+    private val okHttpClient = OkHttpClient.Builder()
+        .addInterceptor(logging)
+        .build()
+
+    val instance: ApiService by lazy {
+        Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .client(okHttpClient)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(ApiService::class.java)
+    }
+}
+
+// 3. Activity & UI
 class SigInActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             ESystemTheme {
+                var isLoading by remember { mutableStateOf(false) }
+
                 SigInScreen(
-                    onSignIn = {
-                        startActivity(Intent(this, MainActivity::class.java))
-                        finish() // finish to prevent going back
+                    isLoading = isLoading,
+                    onSignIn = { email, password ->
+                        handleLogin(email, password) { isLoading = it }
                     }
                 )
+            }
+        }
+    }
+
+    private fun handleLogin(email: String, pass: String, setLoading: (Boolean) -> Unit) {
+        if (email.isEmpty() || pass.isEmpty()) {
+            Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        setLoading(true)
+        lifecycleScope.launch {
+            try {
+                val response = RetrofitClient.instance.login(LoginRequest(email, pass))
+
+                if (response.isSuccessful && response.body() != null) {
+                    // FIXED: Using TokenManager to save token to "user_prefs"
+                    val token = response.body()!!.token
+                    TokenManager(this@SigInActivity).saveToken(token)
+
+                    Toast.makeText(this@SigInActivity, "Welcome ${response.body()?.user?.fullName}", Toast.LENGTH_SHORT).show()
+
+                    val intent = Intent(this@SigInActivity, MainActivity::class.java)
+                    startActivity(intent)
+                    finish()
+                } else {
+                    Toast.makeText(this@SigInActivity, "Login Failed: Check credentials", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                Toast.makeText(this@SigInActivity, "Network Error: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
+            } finally {
+                setLoading(false)
             }
         }
     }
 }
 
 @Composable
-fun SigInScreen( onSignIn: () -> Unit) {
+fun SigInScreen(isLoading: Boolean, onSignIn: (String, String) -> Unit) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
@@ -98,6 +193,7 @@ fun SigInScreen( onSignIn: () -> Unit) {
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(min = 56.dp),
+            enabled = !isLoading,
             leadingIcon = {
                 Image(
                     painter = painterResource(id = R.drawable.mail),
@@ -136,6 +232,7 @@ fun SigInScreen( onSignIn: () -> Unit) {
                     )
                 }
             },
+            enabled = !isLoading,
             visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
         )
@@ -144,11 +241,12 @@ fun SigInScreen( onSignIn: () -> Unit) {
 
         // Login Button
         Button(
-            onClick = {onSignIn()},
+            onClick = { onSignIn(email, password) },
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2D4B65)),
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(min = 56.dp)
+                .heightIn(min = 56.dp),
+            enabled = !isLoading
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -177,6 +275,10 @@ fun SigInScreen( onSignIn: () -> Unit) {
 @Composable
 fun PreviewSignInScreen() {
     ESystemTheme {
-        SigInScreen(onSignIn = {})
+        // Pass false for isLoading so we can see the button text in preview
+        SigInScreen(
+            isLoading = false,
+            onSignIn = { email, password -> /* Do nothing in preview */ }
+        )
     }
 }

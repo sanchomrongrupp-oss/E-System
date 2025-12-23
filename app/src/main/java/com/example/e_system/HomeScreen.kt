@@ -1,5 +1,6 @@
 package com.example.e_system
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -27,6 +28,52 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.e_system.ui.theme.ESystemTheme
+import okhttp3.OkHttpClient
+import retrofit2.Response
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.http.Body
+import retrofit2.http.GET
+import retrofit2.http.Header
+import retrofit2.http.POST
+
+// Matches your student JSON data
+data class StudentMehomeProfile(
+    val _id: String,
+    val fullName: String,
+    val nameKh: String,
+    val email: String,
+    val studentId: String,
+    val studyShift: String
+)
+
+interface ApiServicestuhome {
+    @GET("api/v1/student/me")
+    suspend fun getStudentMe(): Response<StudentMehomeProfile>
+}
+object RetrofitClientstuhome {
+    private const val BASE_URL = "http://10.0.2.2:4000/"
+
+    fun getClient(context: Context): ApiServicestuhome {
+        val httpClient = OkHttpClient.Builder()
+            .addInterceptor { chain ->
+                val token = TokenManager(context).getToken()
+                val requestBuilder = chain.request().newBuilder()
+                if (!token.isNullOrEmpty()) {
+                    requestBuilder.addHeader("Authorization", "Bearer $token")
+                }
+                chain.proceed(requestBuilder.build())
+            }
+            .build()
+
+        return Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .addConverterFactory(GsonConverterFactory.create())
+            .client(httpClient)
+            .build()
+            .create(ApiServicestuhome::class.java)
+    }
+}
 
 class HomeActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -43,6 +90,23 @@ class HomeActivity : ComponentActivity() {
 @Composable
 fun HomeScreen() {
     val context = LocalContext.current
+
+    // Fixed: State type must match your Data Class
+    var studentData by remember { mutableStateOf<StudentMehomeProfile?>(null) }
+    var isLoading by remember { mutableStateOf(true) }
+
+    LaunchedEffect(Unit) {
+        try {
+            val response = RetrofitClientstuhome.getClient(context).getStudentMe()
+            if (response.isSuccessful) {
+                studentData = response.body()
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        } finally {
+            isLoading = false
+        }
+    }
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -74,8 +138,8 @@ fun HomeScreen() {
             Spacer(modifier = Modifier.width(12.dp))
 
             Column {
-                Text("សួស្ដី · Student", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                Text("Department Information Technology", fontSize = 12.sp)
+                Text(text = if (isLoading) "Loading..." else "សួស្ដី · ${studentData?.fullName}", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                Text(text = if (isLoading) "Fetching ID..." else "ID: ${studentData?.studentId ?: "N/A"} | Dept: IT", fontSize = 12.sp)
             }
 
             Spacer(modifier = Modifier.weight(1f))
