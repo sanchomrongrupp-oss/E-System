@@ -26,6 +26,7 @@ import com.example.e_system.ui.theme.ESystemTheme
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -38,20 +39,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 
 data class StudentdentProfile(
-    val _id: String,
-    val role: String,
     val fullName: String,
-    val nameKh: String,
-    val gender: String,
-    val dateOfBirth: String,
-    val placeOfBirth: String,
-    val phone: String,
-    val occupation: String,
-    val address: String,
-    val nationality: String,
-    val email: String,
-    val studentId: String,
-    val studyShift: String
 )
 
 interface ApiServicestudentprofile {
@@ -94,9 +82,13 @@ class ProfileActivity : ComponentActivity() {
                         finish()
                     },
                     onLogoutConfirmed = {
-                        // Implement your actual logout logic here
-                        // For example: clear local data, redirect to login screen
-                        startActivity(Intent(this, SigInActivity::class.java)) // Assuming LoginActivity exists
+                        // 1. CLEAR THE TOKEN
+                        TokenManager(this).clear()
+
+                        // 2. REDIRECT TO LOGIN
+                        val intent = Intent(this, SigInActivity::class.java)
+                        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                        startActivity(intent)
                         finish()
                     }
                 )
@@ -112,8 +104,23 @@ fun ProfileScreen(
     onLogoutConfirmed: () -> Unit = {}
 ) {
     val context = LocalContext.current
-    var showLogoutDialog by remember { mutableStateOf(false) } // <-- State for dialog visibility
+    var showLogoutDialog by remember { mutableStateOf(false) }
 
+    // --- FETCH DATA STATE ---
+    var studentName by remember { mutableStateOf("Loading...") }
+
+    LaunchedEffect(Unit) {
+        try {
+            val response = RetrofitClientstudentprofile.getClient(context).getStudentMe()
+            if (response.isSuccessful) {
+                studentName = response.body()?.fullName ?: "Unknown User"
+            } else {
+                studentName = "Guest User"
+            }
+        } catch (e: Exception) {
+            studentName = "Error Loading"
+        }
+    }
     Scaffold(
         topBar = {
             TopAppBar(
@@ -170,7 +177,7 @@ fun ProfileScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "Meng Kimleap", // Updated to match the image name
+                        text = studentName,
                         color = Color.Black,
                         fontSize = 22.sp,
                         fontWeight = FontWeight.Bold

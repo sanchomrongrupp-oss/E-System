@@ -1,6 +1,8 @@
 package com.example.e_system
 
+import android.content.Context
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -13,32 +15,65 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.e_system.ui.theme.ESystemTheme
+import okhttp3.OkHttpClient
+import retrofit2.Response
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.http.GET
 
 // --- Data Model for a Notification ---
-data class AppNotification(
-    val id: Int,
-    val title: String,
-    val content: String,
-    val time: String,
-    val isUnread: Boolean,
-    val type: NotificationType
+// Matches the "announcements": [...] array in your JSON
+data class AnnouncementResponse(
+    val announcements: List<Announcement>
 )
 
-enum class NotificationType(val color: Color) {
-    ASSIGNMENT(Color(0xFFE57373)), // Light Red
-    ANNOUNCEMENT(Color(0xFF64B5F6)), // Light Blue
-    REMINDER(Color(0xFFFFF176)) // Light Yellow
+data class Announcement(
+    val _id: String,
+    val title: String,
+    val content: String,
+    val type: String,
+    val createdAt: String
+)
+
+data class StudentMenotificationResponse(val id: String)
+
+interface ApiServicestunotification {
+    @GET("api/v1/student/me")
+    suspend fun getStudentMe(): Response<StudentMenotificationResponse>
+
+    // ADD THIS LINE
+    @GET("api/v1/student/announcements")
+    suspend fun getAnnouncements(): Response<AnnouncementResponse>
+}
+
+enum class AnnouncementVisualType(val color: Color) {
+    COURSE(Color(0xFF64B5F6)),    // Blue
+    EMERGENCY(Color(0xFFE57373)), // Red
+    ACADEMIC(Color(0xFF81C784)),  // Green
+    GENERAL(Color(0xFFBDBDBD));   // Gray
+
+    companion object {
+        fun fromString(type: String): AnnouncementVisualType {
+            return entries.find { it.name.equals(type, ignoreCase = true) } ?: GENERAL
+        }
+    }
 }
 
 // --- Activity Definition ---
@@ -54,16 +89,72 @@ class NotificationActivity : ComponentActivity() {
     }
 }
 
+object RetrofitClientstunotification {
+    private const val BASE_URL = "http://10.0.2.2:4000/"
+
+    // We store the instance so we don't recreate it every time
+    private var retrofit: Retrofit? = null
+
+    fun getClient(context: Context): ApiServicestunotification {
+        if (retrofit == null) {
+            val httpClient = OkHttpClient.Builder()
+                .addInterceptor { chain ->
+                    val token = TokenManager(context).getToken()
+                    val requestBuilder = chain.request().newBuilder()
+                    if (!token.isNullOrEmpty()) {
+                        requestBuilder.addHeader("Authorization", "Bearer $token")
+                    }
+                    chain.proceed(requestBuilder.build())
+                }
+                .build()
+
+            retrofit = Retrofit.Builder()
+                .baseUrl(BASE_URL)
+                .addConverterFactory(GsonConverterFactory.create())
+                .client(httpClient)
+                .build()
+        }
+
+        // FIX: Ensure this class matches the function return type
+        return retrofit!!.create(ApiServicestunotification::class.java)
+    }
+}
+
 // --- Main Screen Composable ---
 @Composable
 fun NotificationScreen(onBackClick: () -> Unit) {
+    val context = LocalContext.current
+    var announcements by remember { mutableStateOf<List<Announcement>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(true) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(Unit) {
+        try {
+            val response = RetrofitClientstunotification.getClient(context).getAnnouncements()
+            if (response.isSuccessful && response.body() != null) {
+                announcements = response.body()!!.announcements
+            } else {
+                errorMessage = "Server Error: ${response.code()}"
+            }
+        } catch (e: Exception) {
+            errorMessage = "Network Error: ${e.localizedMessage}"
+        } finally {
+            isLoading = false
+        }
+    }
     Scaffold(
         topBar = { NotificationToolbar(onBackClick = onBackClick) },
         modifier = Modifier.fillMaxSize()
     ) { innerPadding ->
-        NotificationList(
-            modifier = Modifier.padding(innerPadding)
-        )
+        Box(modifier = Modifier.padding(innerPadding).fillMaxSize()) {
+            if (isLoading) {
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+            } else if (errorMessage != null) {
+                Text(errorMessage!!, modifier = Modifier.align(Alignment.Center), color = Color.Red)
+            } else {
+                NotificationList(announcements = announcements)
+            }
+        }
     }
 }
 
@@ -97,100 +188,75 @@ fun NotificationToolbar(onBackClick: () -> Unit) {
 
 // --- Notification List (Good UX: Grouped and Scrollable) ---
 @Composable
-fun NotificationList(modifier: Modifier = Modifier) {
-    // Dummy Data Grouped by Time for better UX
-    val notificationsByGroup = remember {
-        listOf(
-            "Today" to listOf(
-                AppNotification(1, "New Assignment", "Mobile App Dev due tomorrow.", "10:30 AM", true, NotificationType.ASSIGNMENT),
-                AppNotification(2, "Class Cancelled", "SE class at 2 PM is cancelled.", "9:00 AM", true, NotificationType.ANNOUNCEMENT),
-            ),
-            "Yesterday" to listOf(
-                AppNotification(3, "Reminder", "Submit your OOAD case study.", "5:00 PM", false, NotificationType.REMINDER),
-            ),
-            "Last Week" to listOf(
-                AppNotification(4, "Grading Complete", "Check your MIS quiz score.", "Oct 28", false, NotificationType.ANNOUNCEMENT),
-            )
-        )
-    }
-
-    LazyColumn(modifier = modifier.fillMaxSize().background(Color(0xFFF0F0F0))) {
-        notificationsByGroup.forEach { (groupTitle, notifications) ->
-            // Group Header (UX: Clear separation)
-            item {
-                Text(
-                    text = groupTitle,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-                )
-            }
-
-            // List of Notifications in the Group
-            items(notifications) { notification ->
-                NotificationItem(notification = notification)
-            }
-
-            // Separator between groups
-            item {
-                Spacer(modifier = Modifier.height(1.dp).fillMaxWidth().background(Color.LightGray))
-            }
+fun NotificationList(announcements: List<Announcement>) {
+    LazyColumn(modifier = Modifier.fillMaxSize().background(Color(0xFFF5F5F5))) {
+        items(announcements) { announcement ->
+            NotificationItem(announcement = announcement)
         }
     }
 }
 
 // --- Individual Notification Item (Good UX: Visual cues for unread/type) ---
 @Composable
-fun NotificationItem(notification: AppNotification) {
-    val backgroundColor = if (notification.isUnread) Color(0xFFE3F2FD) else MaterialTheme.colorScheme.surface // Light Blue for unread
-    val fontWeight = if (notification.isUnread) FontWeight.Bold else FontWeight.Normal
+fun NotificationItem(announcement: Announcement) {
+    val visualType = AnnouncementVisualType.fromString(announcement.type)
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 8.dp, vertical = 4.dp)
-            .clickable { /* Handle notification click/open */ },
+            .padding(horizontal = 12.dp, vertical = 6.dp),
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = backgroundColor),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(2.dp)
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.Top
         ) {
-            // Icon/Type Indicator
+            // Type Indicator
             Box(
                 modifier = Modifier
-                    .size(8.dp)
+                    .size(10.dp)
+                    .padding(top = 4.dp)
                     .clip(CircleShape)
-                    .background(notification.type.color)
+                    .background(visualType.color)
             )
 
             Spacer(modifier = Modifier.width(12.dp))
 
-            // Text Content
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = notification.title,
+                    text = announcement.title,
                     fontSize = 16.sp,
-                    fontWeight = fontWeight,
-                    color = MaterialTheme.colorScheme.onSurface
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF2D4B65)
                 )
                 Text(
-                    text = notification.content,
+                    text = announcement.content,
                     fontSize = 14.sp,
-                    maxLines = 1,
-                    color = Color.Gray
+                    color = Color.Gray,
+                    lineHeight = 20.sp
                 )
-            }
 
-            // Time Stamp
-            Text(
-                text = notification.time,
-                fontSize = 12.sp,
-                color = Color.DarkGray,
-                modifier = Modifier.padding(start = 16.dp)
-            )
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = announcement.type.uppercase(),
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Black,
+                        color = visualType.color
+                    )
+                    Spacer(modifier = Modifier.weight(1f))
+                    // Simple Date extraction from ISO string
+                    val dateOnly = announcement.createdAt.split("T").firstOrNull() ?: ""
+                    Text(
+                        text = dateOnly,
+                        fontSize = 11.sp,
+                        color = Color.LightGray
+                    )
+                }
+            }
         }
     }
 }
