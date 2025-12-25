@@ -2,11 +2,11 @@ package com.example.e_system
 
 import android.content.Context
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -17,6 +17,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -33,6 +34,7 @@ import retrofit2.http.GET
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.TimeZone
+import kotlin.collections.forEach
 
 
 // --- 1. Data Models (Matched to your JSON) ---
@@ -114,18 +116,8 @@ fun AttendanceScreen() {
     var fullAttendanceList by remember { mutableStateOf<List<AttendanceRecord>>(emptyList()) }
     var studentProfile by remember { mutableStateOf<StudentProfileatt?>(null) }
     var isLoading by remember { mutableStateOf(true) }
-
-    var expanded by remember { mutableStateOf(false) }
     var selectedCourse by remember { mutableStateOf("Select Courses") }
 
-    // ✅ Derived course titles from API data
-    val courseOptions = remember(fullAttendanceList) {
-        listOf("Select Courses") +
-                fullAttendanceList
-                    .mapNotNull { it.course?.title }
-                    .distinct()
-                    .sorted()
-    }
 
     // ✅ Load API ONCE
     LaunchedEffect(key1 = Unit) {
@@ -148,29 +140,27 @@ fun AttendanceScreen() {
         }
     }
 
-    // ✅ Ensure selected course is valid AFTER data loads
-    LaunchedEffect(courseOptions) {
-        if (!courseOptions.contains(selectedCourse)) {
-            selectedCourse = "Select Courses"
-        }
+
+    val courseOptions = remember(fullAttendanceList) {
+        fullAttendanceList
+            .mapNotNull { it.course?.title }
+            .distinct()
+            .sorted()
     }
 
-    // Filter logic
+// 2. Filter the list based on selection
     val filteredList = remember(selectedCourse, fullAttendanceList) {
         if (selectedCourse == "Select Courses") {
-            fullAttendanceList
+            emptyList() // Default state: show nothing
         } else {
-            fullAttendanceList.filter {
-                it.course?.title == selectedCourse
-            }
+            fullAttendanceList.filter { it.course?.title == selectedCourse }
         }
     }
 
-
-    val presentCount = if (filteredList.isEmpty()) 0 else filteredList.count { it.status.lowercase() == "present" }
-    val absentCount = if (filteredList.isEmpty()) 0 else filteredList.count { it.status.lowercase() == "absent" }
-    val permissionCount = if (filteredList.isEmpty()) 0 else filteredList.count { it.status.lowercase() == "permission" }
-
+// 3. Counts will now auto-update when selectedCourse changes
+    val presentCount = filteredList.count { it.status.lowercase() == "present" }
+    val absentCount = filteredList.count { it.status.lowercase() == "absent" }
+    val permissionCount = filteredList.count { it.status.lowercase() == "permission"}
 
     Column(
         modifier = Modifier
@@ -201,47 +191,12 @@ fun AttendanceScreen() {
         }
 
         Spacer(modifier = Modifier.height(32.dp))
-
         // Responsive Dropdown
-        ExposedDropdownMenuBox(
-            expanded = expanded,
-            onExpandedChange = { expanded = !expanded }
-        ) {
-            OutlinedTextField(
-                value = selectedCourse,
-                onValueChange = {},
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .menuAnchor(),
-                readOnly = true,
-                label = { Text("Filter by Course") },
-                trailingIcon = {
-                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
-                }
-            )
-
-            ExposedDropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false }
-            ) {
-                // FIX: Added 'course ->' to the lambda to identify the current item
-                courseOptions.forEach { courseTitle ->
-                    DropdownMenuItem(
-                        text = {
-                            Text(text = courseTitle)
-                        },
-                        onClick = {
-                            selectedCourse = courseTitle
-                            expanded = false
-                        },
-                        // Optional: Adds standard padding for Material 3 menus
-                        contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
-                    )
-                }
-            }
-        }
-
-
+        CardDropdown(
+            selectedText = selectedCourse,
+            coursesItem = courseOptions,
+            onCourseSelected = { selectedCourse = it }
+        )
 
         Spacer(modifier = Modifier.height(15.dp))
 
@@ -289,6 +244,11 @@ fun AttendanceScreen() {
         // Scrollable List Box
         if (isLoading) {
             CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+        }else if (filteredList.isEmpty()) {
+            // Optional: Show a message when no course is selected
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text(text = "Please select a course to view attendance", color = Color.Gray)
+            }
         } else {
             // 7. Scrollable List using LazyColumn for efficiency
             LazyColumn(
@@ -367,6 +327,111 @@ fun StatusBox(label: String, color: Color, imageres: Int, count: Int, modifier: 
         }
     }
 }
+
+@Composable
+fun CardDropdown(
+    selectedText: String,
+    coursesItem: List<String>,
+    onCourseSelected: (String) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    // Box anchors the dropdown menu to the card
+    Box(modifier = Modifier.fillMaxWidth()) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { expanded = !expanded },
+            shape = RoundedCornerShape(12.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        ) {
+            Row(
+                modifier = Modifier
+                    .padding(horizontal = 16.dp, vertical = 14.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = selectedText,
+                    modifier = Modifier.weight(1f),
+                    fontSize = 16.sp,
+                    color = if (selectedText == "Select Courses") Color.Gray else Color.Black
+                )
+
+                // The Arrow icon that rotates up (180 deg) or down (0 deg)
+                Icon(
+                    painter = painterResource(id = R.drawable.drop_down),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(20.dp)
+                        .rotate(if (expanded) 180f else 0f), // Flip logic
+                    tint = Color.DarkGray
+                )
+            }
+            if (expanded) {
+                Card(
+                    modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                ) {
+                    Column(modifier = Modifier.padding(8.dp)) {
+                        coursesItem.forEach { course ->
+                            Box(
+                                modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    onCourseSelected(course)
+                                    expanded = false
+                                }
+                                .padding(12.dp)
+                            ) {
+                                Text(text = course, fontSize = 15.sp)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+//@Composable
+//fun CourseCardItem(
+//    courseTitle: String,
+//) {
+//    Column(
+//        modifier = Modifier
+//            .fillMaxWidth()
+//            .padding(vertical = 6.dp)
+//    ) {
+//        // Main Card
+//        Card(
+//            modifier = Modifier.fillMaxWidth(),
+//            shape = RoundedCornerShape(12.dp),
+//            colors = CardDefaults.cardColors(containerColor = Color.White),
+//            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+//        ) {
+//            Row(
+//                modifier = Modifier
+//                    .padding(16.dp)
+//                    .fillMaxWidth(),
+//                verticalAlignment = Alignment.CenterVertically
+//            ) {
+//                Column(modifier = Modifier.weight(1f)) {
+//                    // Course Title Label
+//                    Text(
+//                        text = courseTitle,
+//                        fontSize = 14.sp,
+//                        color = Color(0xFF1976D2), // A nice blue for the course
+//                        fontWeight = FontWeight.Medium
+//                    )
+//                }
+//            }
+//        }
+//    }
+//}
+
 
 @Composable
 fun AttendanceItem(date: String, name: String, status: String, color: Color, courseTitle: String) {
