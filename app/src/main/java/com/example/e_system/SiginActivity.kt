@@ -150,7 +150,7 @@ fun SigInScreen(isLoading: Boolean, onSignIn: (String, String) -> Unit) {
             .padding(horizontal = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(modifier = Modifier.height(40.dp))
+        Spacer(modifier = Modifier.height(100.dp))
 
         // Logo
         Image(

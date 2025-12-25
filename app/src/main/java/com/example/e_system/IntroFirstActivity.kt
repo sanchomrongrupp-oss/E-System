@@ -58,7 +58,7 @@ fun IntroFirstScreen(onSkip: () -> Unit, onNext: () -> Unit) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 16.dp),
+                .padding(top =60.dp),
             horizontalArrangement = Arrangement.End
         ) {
             Text(
@@ -116,7 +116,7 @@ fun IntroFirstScreen(onSkip: () -> Unit, onNext: () -> Unit) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 32.dp),
+                .padding(bottom = 60.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
