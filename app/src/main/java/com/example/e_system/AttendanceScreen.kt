@@ -396,43 +396,6 @@ fun CardDropdown(
     }
 }
 
-//@Composable
-//fun CourseCardItem(
-//    courseTitle: String,
-//) {
-//    Column(
-//        modifier = Modifier
-//            .fillMaxWidth()
-//            .padding(vertical = 6.dp)
-//    ) {
-//        // Main Card
-//        Card(
-//            modifier = Modifier.fillMaxWidth(),
-//            shape = RoundedCornerShape(12.dp),
-//            colors = CardDefaults.cardColors(containerColor = Color.White),
-//            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-//        ) {
-//            Row(
-//                modifier = Modifier
-//                    .padding(16.dp)
-//                    .fillMaxWidth(),
-//                verticalAlignment = Alignment.CenterVertically
-//            ) {
-//                Column(modifier = Modifier.weight(1f)) {
-//                    // Course Title Label
-//                    Text(
-//                        text = courseTitle,
-//                        fontSize = 14.sp,
-//                        color = Color(0xFF1976D2), // A nice blue for the course
-//                        fontWeight = FontWeight.Medium
-//                    )
-//                }
-//            }
-//        }
-//    }
-//}
-
-
 @Composable
 fun AttendanceItem(date: String, name: String, status: String, color: Color, courseTitle: String) {
     Column(modifier = Modifier
