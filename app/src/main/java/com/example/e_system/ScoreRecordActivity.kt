@@ -1,7 +1,10 @@
 package com.example.e_system
 
+import android.content.Context
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.Crossfade
@@ -15,458 +18,353 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.e_system.ui.theme.Base_Url
 import com.example.e_system.ui.theme.ESystemTheme
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
+import okhttp3.OkHttpClient
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.http.GET
 
-// --- Data Models for Mock Data ---
-data class Subject(val name: String, val isTranscript: Boolean = false)
+// --- 1. Data Models ---
+data class ScoreResponse(val data: List<ScoreDataRecord>)
+
+data class ScoreDataRecord(
+    val _id: String,
+    val course: CourseInformation,
+    val semesters: List<BackendSemester>
+)
+
+data class CourseInformation(val title: String)
+
+data class BackendSemester(
+    val name: String,
+    val grade: String,
+    val assignment: Double,
+    val attendance: Double,
+    val midterm: Double,
+    val final: Double,
+    val total: Double
+)
 
 data class ScoreItem(
     val title: String,
     val weight: String,
     val score: Double,
     val isTotal: Boolean = false,
-    val gradeValue: String? = null // Added for explicit grade display
+    val gradeValue: String? = null
 )
 
-data class SemesterScore(
-    val semester: String,
-    val scoreList: List<ScoreItem>
-)
+data class SemesterScore(val semester: String, val scoreList: List<ScoreItem>)
 
-// --- Mock Data ---
-private val mockSubjectList = listOf(
-    Subject("Mobile App"),
-    Subject("SE & IT"),
-    Subject("MIS"),
-    Subject("OOAD"),
-    Subject("Windows Server"),
-    Subject("Academic Transcript", isTranscript = true)
-)
+// --- 2. API & Retrofit ---
+interface ApiServicescore {
+    @GET("api/v1/student/scorerecords")
+    suspend fun getScoreRecords(): ScoreResponse
+}
 
-private val mockSemesterData = listOf(
-    SemesterScore(
-        semester = "Semester 1",
-        scoreList = listOf(
-            ScoreItem("Attendances", "10%", 10.0),
-            ScoreItem("Assignment", "10%", 4.0),
-            ScoreItem("Midterm", "20%", 15.0),
-            ScoreItem("Final", "60%", 45.50),
-            ScoreItem("Total Score", "100%", 74.50, isTotal = true),
-            ScoreItem("Grade", "", 0.0, gradeValue = "C") // Explicit grade
-        )
-    ),
-    SemesterScore(
-        semester = "Semester 2",
-        scoreList = listOf(
-            ScoreItem("Attendances", "10%", 8.5),
-            ScoreItem("Assignment", "10%", 9.0),
-            ScoreItem("Midterm", "20%", 18.0),
-            ScoreItem("Final", "60%", 50.0),
-            ScoreItem("Total Score", "100%", 85.50, isTotal = true),
-            ScoreItem("Grade", "", 0.0, gradeValue = "B")
-        )
-    )
-)
+object RetrofitClientscore {
+    private var instance: ApiServicescore? = null
+    fun getApiService(context: Context): ApiServicescore {
+        return instance ?: synchronized(this) {
+            val token = TokenManager(context).getToken() ?: ""
+            val okHttpClient = OkHttpClient.Builder()
+                .addInterceptor { chain ->
+                    val request = chain.request().newBuilder()
+                        .addHeader("Authorization", "Bearer $token")
+                        .build()
+                    chain.proceed(request)
+                }
+                .build()
+            val retrofit = Retrofit.Builder()
+                .baseUrl(Base_Url.BASE_URL)
+                .client(okHttpClient)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build()
+            retrofit.create(ApiServicescore::class.java).also { instance = it }
+        }
+    }
+}
 
-// --- Activity Setup ---
+// --- 3. ViewModel ---
+class ScoreViewModel : ViewModel() {
+    private val _records = MutableStateFlow<List<ScoreDataRecord>>(emptyList())
+    val records: StateFlow<List<ScoreDataRecord>> = _records
+    private val _isLoading = MutableStateFlow(true)
+    val isLoading: StateFlow<Boolean> = _isLoading
+    private val _errorMessage = MutableStateFlow<String?>(null)
+    val errorMessage: StateFlow<String?> = _errorMessage
+
+    fun fetchScores(context: Context) {
+        viewModelScope.launch {
+            try {
+                _isLoading.value = true
+                val response = RetrofitClientscore.getApiService(context).getScoreRecords()
+                _records.value = response.data
+            } catch (e: Exception) {
+                Log.e("API_ERROR", e.toString())
+                _errorMessage.value = "Failed to load scores."
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+}
+
+// --- 4. Main Activity ---
 class ScoreRecordActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             ESystemTheme {
-                ScoreRecordNavigation(onActivityFinish = { finish() })
+                val context = LocalContext.current
+                val viewModel: ScoreViewModel = viewModel()
+                LaunchedEffect(Unit) { viewModel.fetchScores(context) }
+                ScoreRecordNavigation(viewModel, onActivityFinish = { finish() })
             }
         }
     }
 }
 
-// --- Navigation Composable (Manages screen switching) ---
+// --- 5. Navigation & Helper ---
 @Composable
-fun ScoreRecordNavigation(onActivityFinish: () -> Unit) {
-    var selectedSubject by remember { mutableStateOf<Subject?>(null) }
+fun ScoreRecordNavigation(viewModel: ScoreViewModel, onActivityFinish: () -> Unit) {
+    val records by viewModel.records.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+    val error by viewModel.errorMessage.collectAsState()
+    var selectedRecord by remember { mutableStateOf<ScoreDataRecord?>(null) }
+    var showFullTranscript by remember { mutableStateOf(false) }
 
-    Crossfade(targetState = selectedSubject, label = "ScreenTransition") { subject ->
-        if (subject == null) {
-            SubjectListScreen(
-                subjects = mockSubjectList,
-                onSubjectClick = { s -> selectedSubject = s },
-                onBackClick = onActivityFinish
-            )
-        } else {
-            ScoreDetailScreen(
-                subjectName = subject.name,
-                allSemesterData = mockSemesterData,
-                onBackClick = { selectedSubject = null }
-            )
-        }
+    BackHandler(enabled = selectedRecord != null || showFullTranscript) {
+        selectedRecord = null
+        showFullTranscript = false
     }
-}
 
-// -----------------------------------------------------------------------------
-// 1. Subject List Screen (List View) - No changes needed, already good.
-// -----------------------------------------------------------------------------
-
-@Composable
-fun SubjectListScreen(
-    subjects: List<Subject>,
-    onSubjectClick: (Subject) -> Unit,
-    onBackClick: () -> Unit
-) {
-    Scaffold(
-        topBar = { SimpleToolbar("Score Record", onBackClick) },
-        containerColor = Color(0xFFF7F7F7),
-        modifier = Modifier.fillMaxSize()
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(horizontal = 16.dp)
-        ) {
-            Text(
-                text = "Subjects",
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(top = 8.dp, bottom = 16.dp)
-            )
-
-            Card(
-                shape = RoundedCornerShape(12.dp),
-                elevation = CardDefaults.cardElevation(4.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                LazyColumn(
-                    contentPadding = PaddingValues(vertical = 8.dp)
-                ) {
-                    items(subjects) { subject ->
-                        SubjectRow(subject = subject, onClick = { onSubjectClick(subject) })
-                        if (subject != subjects.last()) {
-                            Divider(color = Color(0xFFEEEEEE), thickness = 2.dp, modifier = Modifier.padding(horizontal = 16.dp))
-                        }
+    if (isLoading) {
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = Color(0xFF1B5E20)) }
+    } else if (error != null) {
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text(error ?: "Error", color = Color.Red) }
+    } else {
+        Crossfade(targetState = Triple(selectedRecord, showFullTranscript, records), label = "") { (record, showTranscript, allRecords) ->
+            when {
+                showTranscript -> {
+                    val (finalAverage, finalGrade) = calculateFinalGrade(allRecords)
+                    ScoreDetailScreen(
+                        subjectName = "Academic Transcript",
+                        allSemesterData = generateTranscriptData(allRecords) + listOf(
+                            SemesterScore("Final Total", listOf(
+                                ScoreItem("Final Average", "", finalAverage, isTotal = true),
+                                ScoreItem("Final Grade", "", 0.0, isTotal = true, gradeValue = finalGrade)
+                            ))
+                        ),
+                        onBackClick = { showFullTranscript = false }
+                    )
+                }
+                record != null -> {
+                    val uiSemesters = record.semesters.map { sem ->
+                        SemesterScore(sem.name, listOf(
+                            ScoreItem("Attendance", "10%", sem.attendance),
+                            ScoreItem("Assignment", "10%", sem.assignment),
+                            ScoreItem("Midterm", "20%", sem.midterm),
+                            ScoreItem("Final", "60%", sem.final),
+                            ScoreItem("Total Score", "100%", sem.total, isTotal = true),
+                            ScoreItem("Grade", "", 0.0, gradeValue = sem.grade)
+                        ))
                     }
+                    ScoreDetailScreen(record.course.title, uiSemesters, { selectedRecord = null })
+                }
+                else -> {
+                    SubjectListScreen(
+                        records = allRecords,
+                        onSubjectClick = { selectedRecord = it },
+                        onTranscriptClick = { showFullTranscript = true },
+                        onBackClick = onActivityFinish
+                    )
                 }
             }
         }
     }
 }
 
-@Composable
-fun SubjectRow(subject: Subject, onClick: () -> Unit) {
-    val leadingIcon: Painter = if (subject.isTranscript) painterResource(R.drawable.check) else painterResource(R.drawable.next)
-    val color = if (subject.isTranscript) Color(0xFF1B5E20) else Color.Black
-    val iconTint = if (subject.isTranscript) Color(0xFF1B5E20) else Color.Gray
+// --- 6. Generate Transcript & Totals ---
+fun generateTranscriptData(records: List<ScoreDataRecord>): List<SemesterScore> {
+    // 1. Get all unique semester names from the data dynamically
+    val semesterNames = records.flatMap { it.semesters.map { s -> s.name } }.distinct()
 
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(vertical = 12.dp, horizontal = 16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                modifier = Modifier
-                    .size(28.dp)
-                    .background(Color(0xFFF5F5F5), RoundedCornerShape(4.dp)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    painter = leadingIcon,
-                    contentDescription = subject.name,
-                    tint = iconTint.copy(alpha = 0.8f),
-                    modifier = Modifier.size(18.dp)
-                )
-            }
-            Spacer(Modifier.width(16.dp))
-            Text(
-                text = subject.name,
-                fontSize = 16.sp,
-                color = color
+    return semesterNames.map { semName ->
+        // 2. Extract totals for this specific semester to calculate stats
+        val semesterTotals = records.mapNotNull { rec ->
+            rec.semesters.find { it.name == semName }?.total
+        }
+
+        val totalSum = semesterTotals.sum()
+        val average = if (semesterTotals.isNotEmpty()) totalSum / semesterTotals.size else 0.0
+
+        // 3. Determine the Letter Grade based on the average
+        val semesterLetterGrade = when {
+            average >= 90 -> "A"
+            average >= 80 -> "B"
+            average >= 70 -> "C"
+            average >= 60 -> "D"
+            average >= 50 -> "E"
+            else -> "F"
+        }
+
+        // 4. Map each course to a ScoreItem
+        val courseItems = records.map { rec ->
+            val sem = rec.semesters.find { it.name == semName }
+            ScoreItem(
+                title = rec.course.title,
+                weight = "100%    ",
+                score = sem?.total ?: 0.0,
+                isTotal = true
             )
         }
-        Icon(
-            painter = painterResource(R.drawable.next),
-            contentDescription = "Details",
-            tint = Color.Gray
+
+        // 5. Add the Summary Rows (Total, Average, and Grade)
+        val summaryItems = listOf(
+            ScoreItem("Semester Total", "", totalSum, isTotal = true),
+            ScoreItem("Semester Average", "", average, isTotal = true),
+            ScoreItem("Semester Grade", "", 0.0, isTotal = true, gradeValue = semesterLetterGrade)
         )
+
+        SemesterScore(semName, courseItems + summaryItems)
     }
 }
 
-// -----------------------------------------------------------------------------
-// 2. Score Detail Screen (Detail View) - **UPDATED** to match image
-// -----------------------------------------------------------------------------
-
-@Composable
-fun ScoreDetailScreen(
-    subjectName: String,
-    allSemesterData: List<SemesterScore>,
-    onBackClick: () -> Unit
-) {
-    val semesters = allSemesterData.map { it.semester }
-    var selectedSemester by remember { mutableStateOf(semesters.firstOrNull() ?: "") }
-
-    val currentScores = allSemesterData.firstOrNull { it.semester == selectedSemester }?.scoreList
-        ?: emptyList()
-
-    Scaffold(
-        topBar = { SimpleToolbar(subjectName, onBackClick) }, // Subject name in toolbar
-        containerColor = Color(0xFFF7F7F7),
-        modifier = Modifier.fillMaxSize()
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(horizontal = 16.dp)
-        ) {
-            Spacer(modifier = Modifier.height(8.dp)) // Add some space below toolbar
-
-            // **UPDATED**: Header combining "Score Details" with selected semester
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Score Details: ",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.Black
-                )
-                // **UPDATED**: Semester Dropdown for styling
-                SemesterDropdownStyled(
-                    selectedSemester = selectedSemester,
-                    semesters = semesters,
-                    onSemesterSelected = { selectedSemester = it }
-                )
-            }
-
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Score Detail Card (Main content card)
-            Card(
-                shape = RoundedCornerShape(12.dp),
-                // **UPDATED**: Shadow color closer to image
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                modifier = Modifier.fillMaxWidth().background(Color(0xFFE3F2FD), RoundedCornerShape(12.dp)) // Light blue background for the card
-            ) {
-                // **UPDATED**: Padding for the entire card content, no lazy column padding
-                Column(modifier = Modifier.padding(vertical = 8.dp)) {
-                    currentScores.forEachIndexed { index, item ->
-                        ScoreItemRow(item = item)
-                        // **REMOVED**: No dividers between items in the image
-                        // if (item != currentScores.last()) {
-                        //     Divider(color = Color(0xFFEEEEEE), thickness = 1.dp, modifier = Modifier.padding(horizontal = 16.dp))
-                        // }
-                    }
-                }
-            }
-        }
+// --- 7. Calculate Final Total & Grade ---
+fun calculateFinalGrade(records: List<ScoreDataRecord>): Pair<Double, String> {
+    val allTotals = records.flatMap { it.semesters }.map { it.total }
+    val totalSum = allTotals.sum()
+    val average = if (allTotals.isNotEmpty()) totalSum / allTotals.size else 0.0
+    val grades = when {
+        average >= 90 -> "A"
+        average >= 80 -> "B"
+        average >= 70 -> "C"
+        average >= 60 -> "D"
+        else -> "F"
     }
+    return Pair(average, grades)
 }
 
-// **UPDATED**: ScoreItemRow for grade logic and alignment
-@Composable
-fun ScoreItemRow(item: ScoreItem) {
-    val scoreColor = when {
-        item.title == "Grade" -> Color(0xFF1B5E20) // Deep Green
-        item.score < 50.0 && !item.isTotal -> Color.Red
-        item.isTotal -> Color(0xFF1B5E20) // Deep Green for Total Score
-        else -> Color(0xFF1B5E20) // Default green for other scores
-    }
-
-    val displayScore = when (item.title) {
-        "Grade" -> item.gradeValue ?: "N/A" // Use gradeValue if available
-        else -> String.format("%.1f", item.score) // Format to one decimal place
-    }
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 12.dp, horizontal = 16.dp), // Adjust padding as needed
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween // Distribute space
-    ) {
-        // Left side: Icon and Title
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(
-                painter = painterResource(R.drawable.check),
-                contentDescription = "Checked",
-                tint = Color(0xFF1B5E20), // Green checkmark
-                modifier = Modifier.size(20.dp) // Smaller icon
-            )
-            Spacer(Modifier.width(12.dp)) // Smaller spacer
-            Text(
-                text = item.title,
-                fontSize = 15.sp, // Slightly smaller font
-                fontWeight = if (item.isTotal || item.title == "Grade") FontWeight.Bold else FontWeight.Normal,
-                color = Color.Black
-            )
-        }
-
-        // Right side: Weight and Score
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            if (item.weight.isNotEmpty()) {
-                Text(
-                    text = item.weight,
-                    fontSize = 15.sp, // Match title font size
-                    color = Color.Gray,
-                    modifier = Modifier.width(40.dp) // Fixed width for weight alignment
-                )
-            }
-            // Spacer here if weight is present, to push score to the right
-            if (item.weight.isNotEmpty()) {
-                Spacer(Modifier.width(16.dp))
-            }
-
-            Text(
-                text = displayScore,
-                fontSize = 15.sp, // Match title font size
-                fontWeight = FontWeight.Bold,
-                color = scoreColor,
-                modifier = Modifier.width(50.dp), // Fixed width for score alignment
-            )
-        }
-    }
-}
-
-
-// **NEW/UPDATED**: Styled Semester Dropdown to match the image
+// --- 8. Screens ---
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SemesterDropdownStyled(
-    selectedSemester: String,
-    semesters: List<String>,
-    onSemesterSelected: (String) -> Unit
-) {
-    var expanded by remember { mutableStateOf(false) }
-
-    Box(
-        modifier = Modifier
-            .wrapContentSize(Alignment.TopStart)
-            .height(IntrinsicSize.Min) // Allow children to define min height
-    ) {
-        Card(
-            shape = RoundedCornerShape(8.dp),
-            onClick = { expanded = true },
-            colors = CardDefaults.cardColors(containerColor = Color.White), // White background for the dropdown trigger
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-            modifier = Modifier
-                .width(150.dp) // Fixed width for dropdown
-                .height(35.dp) // Fixed height for dropdown
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 8.dp) // Adjust padding inside the card
-            ) {
-                Text(
-                    text = selectedSemester,
-                    fontSize = 15.sp, // Smaller font for dropdown text
-                    fontWeight = FontWeight.Medium,
-                    color = Color.Black, // Black text
-                    maxLines = 1,
-                    modifier = Modifier.weight(1f)
-                )
-                Icon(
-                    painter = if (expanded) painterResource(R.drawable.arrow_up) else painterResource(R.drawable.drop_down),
-                    contentDescription = "Expand",
-                    tint = Color.Gray,
-                    modifier = Modifier.size(20.dp) // Smaller icon
-                )
-            }
-        }
-
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false },
-            modifier = Modifier.width(150.dp) // Match the width of the Card
-        ) {
-            semesters.forEach { semester ->
-                DropdownMenuItem(
-                    text = {
-                        Text(
-                            semester,
-                            fontSize = 15.sp, // Match dropdown item font
-                            color = Color.Black
-                        )
-                    },
-                    onClick = {
-                        onSemesterSelected(semester)
-                        expanded = false
+fun SubjectListScreen(records: List<ScoreDataRecord>, onSubjectClick: (ScoreDataRecord) -> Unit, onTranscriptClick: () -> Unit, onBackClick: () -> Unit) {
+    Scaffold(topBar = { SimpleToolbar("Score Record", onBackClick) }, containerColor = Color(0xFFF7F7F7)) { padding ->
+        Column(Modifier.padding(padding).padding(16.dp)) {
+            Text("Subjects", fontSize = 20.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 16.dp))
+            Card(shape = RoundedCornerShape(12.dp), colors = CardDefaults.cardColors(containerColor = Color.White), elevation = CardDefaults.cardElevation(2.dp)) {
+                LazyColumn {
+                    items(records) { record ->
+                        SubjectRow(record.course.title) { onSubjectClick(record) }
+                        Divider(Modifier.padding(horizontal = 16.dp), thickness = 0.5.dp, color = Color(0xFFEEEEEE))
                     }
-                )
+                    item { SubjectRow("Academic Transcript", isSpecial = true) { onTranscriptClick() } }
+                }
             }
         }
     }
 }
 
+@Composable
+fun SubjectRow(title: String, isSpecial: Boolean = false, onClick: () -> Unit) {
+    Row(Modifier.fillMaxWidth().clickable { onClick() }.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+        Box(Modifier.size(36.dp).background(if (isSpecial) Color(0xFF1B5E20) else Color(0xFFE8F5E9), RoundedCornerShape(8.dp)), contentAlignment = Alignment.Center) {
+            Icon(painterResource(if (isSpecial) R.drawable.check else R.drawable.next), null, tint = if (isSpecial) Color.White else Color(0xFF2E7D32), modifier = Modifier.size(16.dp))
+        }
+        Spacer(Modifier.width(16.dp))
+        Text(title, modifier = Modifier.weight(1f), fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+        Icon(painterResource(R.drawable.next), null, tint = Color.LightGray)
+    }
+}
 
-// -----------------------------------------------------------------------------
-// 3. Reusable Toolbar - No changes needed, already good.
-// -----------------------------------------------------------------------------
+@Composable
+fun ScoreDetailScreen(subjectName: String, allSemesterData: List<SemesterScore>, onBackClick: () -> Unit) {
+    var selectedSemesterName by remember(allSemesterData) { mutableStateOf(allSemesterData.firstOrNull()?.semester ?: "") }
+    val currentScores = remember(selectedSemesterName, allSemesterData) { allSemesterData.find { it.semester == selectedSemesterName }?.scoreList ?: emptyList() }
+
+    Scaffold(topBar = { SimpleToolbar(subjectName, onBackClick) }, containerColor = Color(0xFFF7F7F7)) { padding ->
+        Box(Modifier.padding(padding).fillMaxSize().padding(16.dp)) {
+            Column {
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text("Score Details", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    SemesterDropdownStyled(selected = selectedSemesterName, options = allSemesterData.map { it.semester }, onSelected = { selectedSemesterName = it })
+                }
+                Spacer(Modifier.height(16.dp))
+                Card(shape = RoundedCornerShape(12.dp), colors = CardDefaults.cardColors(containerColor = Color.White), elevation = CardDefaults.cardElevation(2.dp)) {
+                    Column(Modifier.padding(vertical = 8.dp)) {
+                        currentScores.forEach { item -> ScoreItemRow(item) }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun ScoreItemRow(item: ScoreItem) {
+    val isHeader = item.isTotal || item.title == "Grade"
+    val color = if (isHeader) Color(0xFF1B5E20) else Color.Black
+    Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(painterResource(R.drawable.check), null, tint = if (isHeader) Color(0xFF1B5E20) else Color.Gray, modifier = Modifier.size(18.dp))
+            Spacer(Modifier.width(12.dp))
+            Text(item.title, fontWeight = if (isHeader) FontWeight.Bold else FontWeight.Normal, color = color)
+        }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            if (item.weight.isNotEmpty()) Text(item.weight, color = Color.Gray, fontSize = 14.sp, modifier = Modifier.padding(end = 12.dp))
+            val valueColor = when {
+                item.title == "Grade" -> Color(0xFF2196F3)
+                item.isTotal -> Color(0xFF4CAF50)
+                else -> Color.Black
+            }
+            Text(text = item.gradeValue ?: item.score.toString(), fontWeight = FontWeight.Bold, color = valueColor, fontSize = 16.sp)
+        }
+    }
+}
+
+@Composable
+fun SemesterDropdownStyled(selected: String, options: List<String>, onSelected: (String) -> Unit) {
+    var expanded by remember { mutableStateOf(false) }
+    Box(contentAlignment = Alignment.TopEnd) {
+        Card(shape = RoundedCornerShape(8.dp), colors = CardDefaults.cardColors(containerColor = Color.White), elevation = CardDefaults.cardElevation(2.dp), modifier = Modifier.width(160.dp).clickable { expanded = !expanded }) {
+            Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+                Text(selected, color = Color(0xFF1B5E20), fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                Icon(painterResource(R.drawable.drop_down), null, tint = Color(0xFF1B5E20), modifier = Modifier.size(20.dp).rotate(if (expanded) 180f else 0f))
+            }
+        }
+        if (expanded) {
+            Card(modifier = Modifier.padding(top = 45.dp).width(160.dp), shape = RoundedCornerShape(8.dp), colors = CardDefaults.cardColors(containerColor = Color.White), elevation = CardDefaults.cardElevation(8.dp)) {
+                Column {
+                    options.forEach { option ->
+                        Box(Modifier.fillMaxWidth().clickable { onSelected(option); expanded = false }.padding(12.dp)) { Text(option, fontSize = 14.sp) }
+                    }
+                }
+            }
+        }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SimpleToolbar(title: String, onBackClick: () -> Unit) {
     TopAppBar(
-        title = {
-            Text(
-                title,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Medium,
-                color = Color.Black
-            )
-        },
-        navigationIcon = {
-            IconButton(onClick = onBackClick) {
-                Icon(
-                    painter = painterResource(R.drawable.back),
-                    contentDescription = "Back",
-                    tint = Color.Black,
-                    modifier = Modifier
-                        .size(24.dp)
-                )
-            }
-        },
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = Color.White
-        )
+        title = { Text(title, fontSize = 18.sp, fontWeight = FontWeight.SemiBold) },
+        navigationIcon = { IconButton(onClick = onBackClick) { Icon(painterResource(R.drawable.back), null, modifier = Modifier.size(24.dp)) } },
+        colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
     )
-}
-
-// -----------------------------------------------------------------------------
-// 4. Previews
-// -----------------------------------------------------------------------------
-
-@Preview(showBackground = true)
-@Composable
-fun SubjectListPreview() {
-    ESystemTheme {
-        SubjectListScreen(subjects = mockSubjectList, onSubjectClick = {}, onBackClick = {})
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun ScoreDetailPreview() {
-    ESystemTheme {
-        ScoreDetailScreen(
-            subjectName = "Mobile App", // Subject name to display in toolbar
-            allSemesterData = mockSemesterData,
-            onBackClick = {}
-        )
-    }
 }

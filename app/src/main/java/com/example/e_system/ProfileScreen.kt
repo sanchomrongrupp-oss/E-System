@@ -32,6 +32,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import com.example.e_system.ui.theme.Base_Url
 import okhttp3.OkHttpClient
 import retrofit2.Response
 import retrofit2.Retrofit
@@ -47,8 +48,6 @@ interface ApiServicestudentprofile {
     suspend fun getStudentMe(): Response<StudentdentProfile>
 }
 object RetrofitClientstudentprofile {
-    private const val BASE_URL = "http://10.0.2.2:4000/"
-
     fun getClient(context: Context): ApiServicestudentprofile {
         val httpClient = OkHttpClient.Builder()
             .addInterceptor { chain ->
@@ -62,7 +61,7 @@ object RetrofitClientstudentprofile {
             .build()
 
         return Retrofit.Builder()
-            .baseUrl(BASE_URL)
+            .baseUrl(Base_Url.BASE_URL)
             .addConverterFactory(GsonConverterFactory.create())
             .client(httpClient)
             .build()

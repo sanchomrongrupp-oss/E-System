@@ -25,6 +25,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.e_system.ui.theme.Base_Url
 import com.example.e_system.ui.theme.ESystemTheme
 import okhttp3.OkHttpClient
 import retrofit2.Response
@@ -54,8 +55,6 @@ interface ApiServicestuprofile {
     suspend fun getStudentMe(): Response<StudentMeProfile>
 }
 object RetrofitClientstuprofile {
-    private const val BASE_URL = "http://10.0.2.2:4000/"
-
     fun getClient(context: Context): ApiServicestuprofile {
         val httpClient = OkHttpClient.Builder()
             .addInterceptor { chain ->
@@ -69,7 +68,7 @@ object RetrofitClientstuprofile {
             .build()
 
         return Retrofit.Builder()
-            .baseUrl(BASE_URL)
+            .baseUrl(Base_Url.BASE_URL)
             .addConverterFactory(GsonConverterFactory.create())
             .client(httpClient)
             .build()

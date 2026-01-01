@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
+import com.example.e_system.ui.theme.Base_Url
 import com.example.e_system.ui.theme.ESystemTheme
 import okhttp3.OkHttpClient
 import retrofit2.Response
@@ -50,8 +51,6 @@ interface ApiServicestuhome {
     suspend fun getStudentMe(): Response<StudentMehomeProfile>
 }
 object RetrofitClientstuhome {
-    private const val BASE_URL = "http://10.0.2.2:4000/"
-
     fun getClient(context: Context): ApiServicestuhome {
         val httpClient = OkHttpClient.Builder()
             .addInterceptor { chain ->
@@ -65,7 +64,7 @@ object RetrofitClientstuhome {
             .build()
 
         return Retrofit.Builder()
-            .baseUrl(BASE_URL)
+            .baseUrl(Base_Url.BASE_URL)
             .addConverterFactory(GsonConverterFactory.create())
             .client(httpClient)
             .build()

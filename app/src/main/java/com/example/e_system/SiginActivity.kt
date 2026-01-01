@@ -27,6 +27,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.lifecycleScope
+import com.example.e_system.ui.theme.Base_Url
 import com.example.e_system.ui.theme.ESystemTheme
 import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
@@ -65,8 +66,6 @@ interface ApiService {
 
 // --- 4. RETROFIT CLIENT ---
 object RetrofitClient {
-    private const val BASE_URL = "http://10.0.2.2:4000/"
-
     private val logging = HttpLoggingInterceptor().apply {
         level = HttpLoggingInterceptor.Level.BODY
     }
@@ -77,7 +76,7 @@ object RetrofitClient {
 
     val instance: ApiService by lazy {
         Retrofit.Builder()
-            .baseUrl(BASE_URL)
+            .baseUrl(Base_Url.BASE_URL)
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
