@@ -1,205 +1,307 @@
 package com.example.e_system
 
+import android.content.Context
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.e_system.ui.theme.ESystemTheme // Assuming your theme is located here
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.e_system.ui.theme.Base_Url
+import com.example.e_system.ui.theme.ESystemTheme
+import kotlinx.coroutines.launch
+import okhttp3.OkHttpClient
+import retrofit2.Response
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.http.Body
+import retrofit2.http.GET
+import retrofit2.http.PATCH
+import retrofit2.http.PUT
 
+// --- 1. Data Models ---
+data class ChangePasswordRequest(
+    val currentPassword: String,
+    val newPassword: String
+)
+
+data class ChangePasswordResponse(
+    val message: String? = null,
+    val status: String? = null
+)
+
+data class UserProfile(
+    val email: String
+)
+
+// --- 2. API Interface ---
+interface ChangePasswordApiService {
+    @GET("api/v1/student/me")
+    suspend fun getProfile(): Response<UserProfile>
+
+    // Matches your router.put('/profile/me/change-password')
+    @PUT("api/v1/users/profile/me/change-password")
+    suspend fun changePassword(
+        @Body request: ChangePasswordRequest
+    ): Response<ChangePasswordResponse>
+}
+object RetrofitClientscorechange_pass {
+    private var retrofit: Retrofit? = null
+
+    // Ensure this returns 'Retrofit', NOT a specific API service
+    fun getApiService(context: Context): Retrofit {
+        if (retrofit == null) {
+            val httpClient = OkHttpClient.Builder()
+                .addInterceptor { chain ->
+                    val token = TokenManager(context).getToken()
+                    val request = chain.request().newBuilder()
+                    if (!token.isNullOrEmpty()) {
+                        request.addHeader("Authorization", "Bearer $token")
+                    }
+                    chain.proceed(request.build())
+                }
+                .build()
+
+            retrofit = Retrofit.Builder()
+                .baseUrl(Base_Url.BASE_URL)
+                .addConverterFactory(GsonConverterFactory.create())
+                .client(httpClient)
+                .build()
+        }
+        return retrofit!!
+    }
+}
+// --- 3. ViewModel ---
+class ChangePasswordViewModel : ViewModel() {
+    var isLoading by mutableStateOf(false)
+    var userEmail by mutableStateOf("Loading...")
+    var errorMessage by mutableStateOf<String?>(null)
+
+    // 1. Fetch the user profile to display the email
+    fun fetchProfile(context: Context) {
+        viewModelScope.launch {
+            try {
+                // Ensure this uses the correct Retrofit client instance for your app
+                val api = RetrofitClientscorechange_pass.getApiService(context).create(ChangePasswordApiService::class.java)
+                val response = api.getProfile()
+
+                if (response.isSuccessful) {
+                    userEmail = response.body()?.email ?: "No email found"
+                } else {
+                    errorMessage = "Session expired. Please log in again."
+                }
+            } catch (e: Exception) {
+                errorMessage = "Network error: Could not load profile."
+            }
+        }
+    }
+
+    // 2. Perform the Password Change (PUT Request)
+    fun performPasswordChange(context: Context, currentPass: String, newPass: String, onFinished: () -> Unit) {
+        viewModelScope.launch {
+            isLoading = true
+            errorMessage = null
+            try {
+                // 1. Get the Retrofit instance
+                val retrofitInstance = RetrofitClientscorechange_pass.getApiService(context)
+
+                // 2. Create the Service
+                val api = retrofitInstance.create(ChangePasswordApiService::class.java)
+
+                // 3. Make the call
+                val response = api.changePassword(ChangePasswordRequest(currentPass, newPass))
+
+                if (response.isSuccessful) {
+                    onFinished()
+                } else {
+                    errorMessage = "Incorrect current password"
+                }
+            } catch (e: Exception) {
+                errorMessage = "Network error: ${e.localizedMessage}"
+            } finally {
+                isLoading = false
+            }
+        }
+    }
+}
+
+// --- 4. Activity ---
 class ChangePasswordActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
+            val vm: ChangePasswordViewModel = viewModel()
+            val context = LocalContext.current
+
+            LaunchedEffect(Unit) {
+                vm.fetchProfile(context)
+            }
+
             ESystemTheme {
                 ChangePasswordScreen(
-                    currentEmail = "meng11@gmail.com", // Example user email
-                    onBackClicked = { finish() },
-                    onPasswordChanged = { oldPass, newPass ->
-                        // In a real app, this is where you'd call your backend API
-                        println("Attempting password change from $oldPass to $newPass")
-                    }
+                    currentEmail = vm.userEmail,
+                    viewModel = vm,
+                    onBackClicked = { finish() }
                 )
             }
         }
     }
 }
 
-// --- Main Screen Composable ---
+// --- 5. Main Screen Composable ---
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChangePasswordScreen(
     currentEmail: String,
-    onBackClicked: () -> Unit,
-    onPasswordChanged: (String, String) -> Unit
+    viewModel: ChangePasswordViewModel,
+    onBackClicked: () -> Unit
 ) {
     var oldPassword by remember { mutableStateOf("") }
     var newPassword by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
+    var showSuccessAlert by remember { mutableStateOf(false) } // Alert State
+    val context = LocalContext.current
+    val scrollState = rememberScrollState()
+
+    if (showSuccessAlert) {
+        AlertDialog(
+            onDismissRequest = { },
+            confirmButton = {
+                Button(onClick = {
+                    showSuccessAlert = false
+                    onBackClicked()
+                }) { Text("OK") }
+            },
+            title = { Text("Success", fontWeight = FontWeight.Bold) },
+            text = { Text("Your password has been updated successfully.") },
+            shape = RoundedCornerShape(12.dp)
+        )
+    }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = {
-                    Text(
-                        text = "Change Password",
-                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Normal),
-                        color = Color.Black
-                    )
-                },
+                title = { Text("Change Password", fontWeight = FontWeight.Medium) },
                 navigationIcon = {
                     IconButton(onClick = onBackClicked) {
-                        Icon(
-                            painter = painterResource(R.drawable.back),
-                            contentDescription = "Back",
-                            tint = Color.Black,
-                            modifier = Modifier
-                                .size(24.dp)
-                        )
+                        Icon(painterResource(R.drawable.back), "Back", modifier = Modifier.size(24.dp))
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.White
-                )
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
             )
         },
-        containerColor = Color(0xFFF7F7F7) // Light gray background
+        containerColor = Color(0xFFF7F7F7)
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(horizontal = 24.dp, vertical = 16.dp),
+                .padding(horizontal = 24.dp, vertical = 16.dp)
+                .verticalScroll(scrollState), // Added scroll support
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // --- 1. Header Card (Lock Icon + Description) ---
-            PasswordHeader(currentEmail)
-
+            PasswordHeader()
             Spacer(modifier = Modifier.height(24.dp))
 
-            // --- 2. Input Fields ---
-
-            // Email (Non-editable, for user reference)
             InputField(
                 value = currentEmail,
-                label = "",
-                leadingIcon = {
-                    Icon(
-                        painter = painterResource(R.drawable.mail) ,
-                        contentDescription = "Email Icon", // IMPORTANT for accessibility
-                        tint = Color.Gray // Optional: Set a tint color
-                    )
-                              },
+                label = "Account Email",
+                leadingIcon = { Icon(painterResource(R.drawable.mail), null, modifier = Modifier.size(24.dp)) },
                 isReadOnly = true
             )
+
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Old Password
             PasswordInputField(
                 value = oldPassword,
-                onValueChange = { oldPassword = it },
+                onValueChange = { oldPassword = it; viewModel.errorMessage = null },
                 label = "Old Password"
             )
             Spacer(modifier = Modifier.height(16.dp))
-
-            // New Password
             PasswordInputField(
                 value = newPassword,
-                onValueChange = { newPassword = it },
+                onValueChange = { newPassword = it; viewModel.errorMessage = null },
                 label = "New Password"
             )
             Spacer(modifier = Modifier.height(16.dp))
-
-            // Confirm New Password
             PasswordInputField(
                 value = confirmPassword,
-                onValueChange = { confirmPassword = it },
+                onValueChange = { confirmPassword = it; viewModel.errorMessage = null },
                 label = "Confirm New Password"
             )
 
-            Spacer(modifier = Modifier.weight(1f)) // Push button to bottom
-
-            // --- 3. Submission Button ---
-            Button(
-                onClick = {
-                    if (newPassword == confirmPassword && newPassword.isNotEmpty()) {
-                        onPasswordChanged(oldPassword, newPassword)
-                    } else {
-                        // In a real app, you would show a Snackbar or error message here
-                        println("Error: Passwords must match and cannot be empty.")
-                    }
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp)
-                    .padding(vertical = 4.dp),
-                shape = RoundedCornerShape(10.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF2E4E68) // Dark Blue
-                ),
-                elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
-            ) {
+            if (viewModel.errorMessage != null) {
                 Text(
-                    text = "Set new password",
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
-                    color = Color.White
-                )
-                Spacer(modifier = Modifier.size(8.dp))
-                Icon(
-                    painter = painterResource(R.drawable.send),
-                    contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier.size(20.dp)
+                    text = viewModel.errorMessage!!,
+                    color = Color.Red,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(top = 12.dp)
                 )
             }
-            Spacer(modifier = Modifier.height(16.dp))
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            Button(
+                // Inside your Button onClick in ChangePasswordScreen:
+                onClick = {
+                    when {
+                        oldPassword.isEmpty() || newPassword.isEmpty() -> {
+                            viewModel.errorMessage = "All fields are required"
+                        }
+                        newPassword.length < 8 -> {
+                            viewModel.errorMessage = "New password is too short (min 8)"
+                        }
+                        newPassword != confirmPassword -> {
+                            viewModel.errorMessage = "Passwords do not match"
+                        }
+                        else -> {
+                            viewModel.performPasswordChange(context, oldPassword, newPassword) {
+                                showSuccessAlert = true // Trigger Alert
+                            }
+                        }
+                    }
+                },
+                modifier = Modifier.fillMaxWidth().height(56.dp),
+                enabled = !viewModel.isLoading,
+                shape = RoundedCornerShape(10.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2E4E68))
+            ) {
+                if (viewModel.isLoading) {
+                    CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.White, strokeWidth = 2.dp)
+                } else {
+                    Text("Set new password", color = Color.White)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Icon(painterResource(R.drawable.send), null, tint = Color.White, modifier = Modifier.size(20.dp))
+                }
+            }
+            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }
 
-// --- Composable for Header Section ---
+// --- 6. Helper Components ---
+
 @Composable
-fun PasswordHeader(email: String) {
+fun PasswordHeader() {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
@@ -207,145 +309,78 @@ fun PasswordHeader(email: String) {
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(
-            modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth(),
+            modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Animated/Spinning Lock Icon (Simulated with Refresh)
             Box(
                 modifier = Modifier
                     .size(48.dp)
-                    .background(Color.LightGray.copy(alpha = 0.2f), RoundedCornerShape(8.dp)),
+                    .background(Color(0xFF2E4E68).copy(alpha = 0.1f), RoundedCornerShape(8.dp)),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    painter = painterResource(R.drawable.refresh), // Using Refresh to simulate the circular arrow
-                    contentDescription = "Change Password",
-                    tint = Color(0xFF2E4E68),
-                    modifier = Modifier.size(32.dp)
-                )
+                Icon(painterResource(R.drawable.refresh), null, tint = Color(0xFF2E4E68), modifier = Modifier.size(28.dp))
             }
-
             Column {
-                Text(
-                    text = "Change Password",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.Black
-                )
-                Text(
-                    text = "Update password for enhanced account security.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color.Gray
-                )
+                Text("Change Password", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                Text("Update password for enhanced account security.", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
             }
         }
     }
 }
 
-// --- Reusable Composable for Text/Email Input ---
 @Composable
 fun InputField(
     value: String,
     label: String,
+    onValueChange: (String) -> Unit = {},
     leadingIcon: @Composable () -> Unit,
     isReadOnly: Boolean = false
 ) {
     OutlinedTextField(
         value = value,
-        onValueChange = { /* Only changes if not readOnly */ },
-        label = if (label.isNotEmpty()) {
-            @Composable { Text(label) }
-        } else null,
+        onValueChange = onValueChange,
+        label = { Text(label) },
         readOnly = isReadOnly,
         modifier = Modifier.fillMaxWidth(),
-        leadingIcon = {
-            Icon(
-                painter = painterResource(R.drawable.mail),
-                contentDescription = "Email Icon Reset",
-                tint = Color.Gray,
-                modifier = Modifier
-                    .size(24.dp)
-            )
-        },
+        leadingIcon = leadingIcon,
         shape = RoundedCornerShape(10.dp),
-        // --- FIX IS HERE ---
+        singleLine = true,
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = Color(0xFF2E4E68),
-            unfocusedBorderColor = Color.LightGray,
-            disabledBorderColor = Color.LightGray,
-            focusedContainerColor = Color.White,
-            unfocusedContainerColor = Color.White,
-            disabledContainerColor = Color.White
+            unfocusedBorderColor = Color(0xFFBDBDBD),
+            unfocusedContainerColor = if (isReadOnly) Color(0xFFF2F2F2) else Color.White,
+            focusedContainerColor = if (isReadOnly) Color(0xFFF2F2F2) else Color.White,
+            disabledContainerColor = Color(0xFFF2F2F2),
+            focusedLabelColor = Color(0xFF2E4E68)
         )
     )
 }
 
 @Composable
-fun PasswordInputField(
-    value: String,
-    onValueChange: (String) -> Unit,
-    label: String
-) {
+fun PasswordInputField(value: String, onValueChange: (String) -> Unit, label: String) {
     var passwordVisible by remember { mutableStateOf(false) }
-
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
         label = { Text(label) },
-
-        // 1. FIX: Leading Icon uses R.drawable.padlock
-        leadingIcon = {
-            Icon(
-                painter = painterResource(id = R.drawable.padlock),
-                contentDescription = "Lock",
-                tint = Color.Gray,
-                modifier = Modifier
-                    .size(24.dp)
-            )
-        },
-
-        // 2. FIX: Trailing Icon uses the correct drawables (view/hide)
+        leadingIcon = { Icon(painterResource(R.drawable.padlock), null, modifier = Modifier.size(24.dp)) },
         trailingIcon = {
-            // Determine which drawable to show based on passwordVisible state
-            val imageId = if (passwordVisible) R.drawable.hide else R.drawable.view
-
             IconButton(onClick = { passwordVisible = !passwordVisible }) {
                 Icon(
-                    // Use the determined imageId
-                    painter = painterResource(id = imageId),
-                    contentDescription = if (passwordVisible) "Hide password" else "Show password",
-                    tint = Color.Gray,
-                    modifier = Modifier
-                        .size(24.dp)
+                    painterResource(if (passwordVisible) R.drawable.hide else R.drawable.view),
+                    null,
+                    modifier = Modifier.size(24.dp)
                 )
             }
         },
-
         visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(10.dp),
-
-        // The colors part is already correctly using Material 3 OutlinedTextFieldDefaults.colors
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = Color(0xFF2E4E68),
-            unfocusedBorderColor = Color.LightGray,
-            focusedContainerColor = Color.White,
-            unfocusedContainerColor = Color.White
+            unfocusedContainerColor = Color.White,
+            focusedContainerColor = Color.White
         )
     )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun ChangePasswordScreenPreview() {
-    ESystemTheme {
-        ChangePasswordScreen(
-            currentEmail = "meng11@gmail.com",
-            onBackClicked = {},
-            onPasswordChanged = { _, _ -> }
-        )
-    }
 }
