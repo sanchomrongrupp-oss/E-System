@@ -109,7 +109,10 @@ fun SearchAppBar(
         },
         navigationIcon = {
             IconButton(onClick = onBackClicked) {
-                Icon(painter = painterResource(R.drawable.back), contentDescription = "Back")
+                Icon(painter = painterResource(R.drawable.back),
+                    modifier = Modifier
+                        .size(24.dp)
+                    , contentDescription = "Back")
             }
         }
     )

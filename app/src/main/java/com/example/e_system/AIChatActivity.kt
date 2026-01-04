@@ -124,6 +124,8 @@ fun RUPPToolbar(onBackClick: () -> Unit) {
             IconButton(onClick = { /* Handle Menu Click */ }) {
                 Icon(
                     painter = painterResource(R.drawable.menu),
+                        modifier = Modifier
+                            .size(24.dp),
                     contentDescription = "Menu",
                     tint = Color.Black,
                 )
@@ -154,7 +156,7 @@ fun RUPPInputBar(
         shadowElevation = 8.dp,
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(130.dp)
+            .heightIn(150.dp)
     ) {
         Column(modifier = Modifier.padding(top = 8.dp)) {
             Row(
@@ -167,20 +169,10 @@ fun RUPPInputBar(
             ) {
                 // Input controls (Left side: Plus & Attach)
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.plus),
-                        contentDescription = "Add",
-                        tint = Color.Gray,
-                        modifier = Modifier
-                            .size(24.dp)
-                            .clickable { /* Handle plus click */ }
-                    )
                     Spacer(modifier = Modifier.width(10.dp))
-
                     // --- Attachment Picker Trigger ---
                     AttachmentPickerTrigger(onFileSelected = onFileSelected)
                     // -------------------------------
-
                     Spacer(modifier = Modifier.width(10.dp))
                 }
 
