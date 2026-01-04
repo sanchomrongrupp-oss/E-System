@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -264,7 +265,7 @@ fun AttendanceScreen() {
                     val (label, color) = when (record.status.lowercase()) {
                         "present" -> "P" to Color(0xFF4CAF50)
                         "absent" -> "A" to Color(0xFF700000)
-                        else -> "L" to Color(0xFF2D4B65)
+                        else -> "Pe" to Color(0xFF2D4B65)
                     }
 
                     AttendanceItem(
@@ -290,40 +291,26 @@ fun formatDate(isoString: String): String {
 }
 @Composable
 fun StatusBox(label: String, color: Color, imageres: Int, count: Int, modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier
-            .height(130.dp)
-            .background(color, RoundedCornerShape(10.dp))
-            .padding(12.dp)
+    // Aspect ratio ensures the boxes stay square-ish regardless of width
+    Card(
+        modifier = modifier.aspectRatio(0.95f),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = color)
     ) {
         Column(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxSize().padding(10.dp),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-
             Image(
                 painter = painterResource(id = imageres),
                 contentDescription = null,
                 modifier = Modifier
-                    .size(45.dp)
-                    .clip(CircleShape)
-                    .background(Color.White)
-                    .padding(8.dp)
+                    .size(32.dp)
             )
-
-            Text(
-                text = label,
-                color = Color.White,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold
-            )
-
-            Text(
-                text = "$count",
-                color = Color.White,
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Bold
-            )
+            Column {
+                Text(label, color = Color.White.copy(alpha = 0.9f), fontSize = 16.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text("$count", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold)
+            }
         }
     }
 }
