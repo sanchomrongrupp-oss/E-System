@@ -41,6 +41,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
+import coil.compose.rememberAsyncImagePainter
 import com.example.e_system.ui.theme.Base_Url
 import com.example.e_system.ui.theme.ESystemTheme
 import kotlinx.coroutines.delay
@@ -58,7 +59,8 @@ data class StudentMehomeProfile(
     val nameKh: String,
     val email: String,
     val studentId: String,
-    val studyShift: String
+    val studyShift: String,
+    val avatar: String?
 )
 data class CourseResponse(
     val data: List<CourseItem>
@@ -125,7 +127,16 @@ fun HomeScreen() {
     var studentData by remember { mutableStateOf<StudentMehomeProfile?>(null) }
     var courseList by remember { mutableStateOf<List<CourseItem>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
-
+    val avatarUrl = remember(studentData) {
+        val rawPath = studentData?.avatar
+        if (!rawPath.isNullOrEmpty()) {
+            val base = Base_Url.BASE_URL.trimEnd('/')
+            val path = rawPath.trimStart('/')
+            "$base/$path"
+        } else {
+            null
+        }
+    }
     LaunchedEffect(Unit) {
         try {
             val api = RetrofitClientstuhome.getClient(context)
@@ -144,6 +155,7 @@ fun HomeScreen() {
             isLoading = false
         }
     }
+
     val displayCredit = courseList.firstOrNull()?.credits ?: 0
     Column(
         modifier = Modifier
@@ -158,8 +170,10 @@ fun HomeScreen() {
             modifier = Modifier.fillMaxWidth()
         ) {
 
-                Image(
-                    painter = painterResource(id = R.drawable.vanda),
+            Image(
+                painter = rememberAsyncImagePainter(
+                    model = avatarUrl ?: R.drawable.avatar // Fallback to vanda if URL is null
+                ),
                     contentDescription = "Profile",
                     modifier = Modifier
                         .size(46.dp)

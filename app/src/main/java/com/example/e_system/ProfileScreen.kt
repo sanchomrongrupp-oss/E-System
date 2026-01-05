@@ -2,6 +2,8 @@ package com.example.e_system
 
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -24,28 +26,54 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.e_system.ui.theme.ESystemTheme
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.border
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import androidx.core.content.ContextCompat
+import coil.compose.rememberAsyncImagePainter
+import androidx.core.content.FileProvider
 import com.example.e_system.ui.theme.Base_Url
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
+import okhttp3.RequestBody.Companion.asRequestBody
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
+import retrofit2.http.Multipart
+import retrofit2.http.POST
+import retrofit2.http.Part
+import java.io.File
 
 data class StudentdentProfile(
     val fullName: String,
+    val avatar: String?
 )
 
 interface ApiServicestudentprofile {
     @GET("api/v1/student/me")
     suspend fun getStudentMe(): Response<StudentdentProfile>
+
+    @Multipart
+    @POST("api/v1/users/profile/me/upload-picture")
+    suspend fun uploadProfilePicture(
+        @Part profile: MultipartBody.Part
+    ): Response<Unit> // You can create a data class for the response if needed
 }
 object RetrofitClientstudentprofile {
     fun getClient(context: Context): ApiServicestudentprofile {
@@ -66,6 +94,31 @@ object RetrofitClientstudentprofile {
             .client(httpClient)
             .build()
             .create(ApiServicestudentprofile::class.java)
+    }
+}
+
+fun uploadImageToServer(context: Context, uri: Uri, onComplete: (Boolean) -> Unit) {
+    val contentResolver = context.contentResolver
+    // Create a temp file from the URI
+    val inputStream = contentResolver.openInputStream(uri)
+    val file = File(context.cacheDir, "upload_image.jpg")
+    file.outputStream().use { inputStream?.copyTo(it) }
+
+    val requestFile = file.asRequestBody("image/jpeg".toMediaTypeOrNull())
+    // KEY MUST BE "profile"
+    val body = MultipartBody.Part.createFormData("profile", file.name, requestFile)
+
+    CoroutineScope(Dispatchers.IO).launch {
+        try {
+            val response = RetrofitClientstudentprofile.getClient(context).uploadProfilePicture(body)
+            withContext(Dispatchers.Main) {
+                onComplete(response.isSuccessful)
+            }
+        } catch (e: Exception) {
+            withContext(Dispatchers.Main) {
+                onComplete(false)
+            }
+        }
     }
 }
 
@@ -104,17 +157,25 @@ fun ProfileScreen(
 ) {
     val context = LocalContext.current
     var showLogoutDialog by remember { mutableStateOf(false) }
-
-    // --- FETCH DATA STATE ---
     var studentName by remember { mutableStateOf("Loading...") }
+    var avatarUrl by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(Unit) {
         try {
             val response = RetrofitClientstudentprofile.getClient(context).getStudentMe()
             if (response.isSuccessful) {
-                studentName = response.body()?.fullName ?: "Unknown User"
-            } else {
-                studentName = "Guest User"
+                val profile = response.body()
+                studentName = profile?.fullName ?: "Unknown User"
+
+                val rawAvatar = profile?.avatar // "/uploads/profiles/IMG_..."
+
+                avatarUrl = if (!rawAvatar.isNullOrEmpty()) {
+                    val base = Base_Url.BASE_URL.trimEnd('/')
+                    val path = rawAvatar.trimStart('/')
+                    "$base/$path" // This guarantees exactly one slash
+                } else {
+                    null
+                }
             }
         } catch (e: Exception) {
             studentName = "Error Loading"
@@ -123,137 +184,243 @@ fun ProfileScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                modifier = Modifier
-                    .padding(start = 8.dp)
-                    .fillMaxWidth(),
-                title = {
-                    Text(
-                        text = "Informations",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.Black,
-                        modifier = Modifier.padding(start = 12.dp)
-                    )
-                },
+                title = { Text("Information", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
-                    Image(
-                        // Note: If you don't have R.drawable.back, use Icons.AutoMirrored.Filled.ArrowBack
-                        painter = painterResource(id = R.drawable.back),
-                        contentDescription = "Back Button",
-                        modifier = Modifier
-                            .height(30.dp)
-                            .width(30.dp)
-                            .padding(4.dp)
-                            .clickable { onNavigateToHome() }
-                    )
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
-                )
+                    IconButton(onClick = onNavigateToHome) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.back),
+                            contentDescription = "Back",
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                }
             )
-        },
-        containerColor = MaterialTheme.colorScheme.background
+        }
     ) { innerPadding ->
+        // Use a Box to allow overlapping the Image on top of the Card
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
+                .background(MaterialTheme.colorScheme.background)
         ) {
-            // Main Card
+            // 1. The Content Card
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .padding(top = 100.dp), // Position card below image area
-                shape = RoundedCornerShape(20.dp),
-                elevation = CardDefaults.cardElevation(8.dp)
+                    .padding(horizontal = 20.dp)
+                    .padding(top = 60.dp, bottom = 20.dp), // Pushed down to make room for image
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                elevation = CardDefaults.cardElevation(4.dp)
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .verticalScroll(rememberScrollState())
-                        .padding(top = 80.dp, bottom = 16.dp), // Space for profile image overlap
+                        .padding(top = 70.dp, bottom = 24.dp), // Space inside for the overlapped image
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
                         text = studentName,
-                        color = Color.Black,
                         fontSize = 22.sp,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Black
                     )
-                    Spacer(modifier = Modifier.height(16.dp))
 
-                    // Profile Options
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // Menu Options
                     ProfileOption(R.drawable.account, "Personal Information") {
                         context.startActivity(Intent(context, MyAccountActivity::class.java))
                     }
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
                     ProfileOption(R.drawable.trend, "Score Records") {
                         context.startActivity(Intent(context, ScoreRecordActivity::class.java))
                     }
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
                     ProfileOption(R.drawable.present, "Attendance Records") {
                         context.startActivity(Intent(context, AttRecordActivity::class.java))
                     }
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
                     ProfileOption(R.drawable.contact_school, "E-System Support") {
                         context.startActivity(Intent(context, ContactSchoolActivity::class.java))
                     }
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
                     ProfileOption(R.drawable.reset_password, "Change Password") {
                         context.startActivity(Intent(context, ChangePasswordActivity::class.java))
                     }
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
                     ProfileOption(R.drawable.help, "About the App") {
                         context.startActivity(Intent(context, AboutAppActivity::class.java))
                     }
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
 
-                    // --- LOGOUT OPTION (TRIGGER DIALOG) ---
-                    ProfileOption(R.drawable.log_out, "Log Out", textColor = MaterialTheme.colorScheme.error) {
-                        showLogoutDialog = true // <-- Show the dialog on click
+                    ProfileOption(
+                        R.drawable.log_out,
+                        "Log Out",
+                        textColor = MaterialTheme.colorScheme.error
+                    ) {
+                        showLogoutDialog = true
                     }
-                    // ------------------------------------
-
-                    Spacer(modifier = Modifier.height(16.dp))
                 }
             }
 
-            // Profile Image overlapping card
+            // 2. The Overlapping Profile Image
             Box(
                 modifier = Modifier
-                    .offset(y = (-50).dp)
                     .align(Alignment.TopCenter)
-                    .padding(top = 100.dp)
-                    .size(120.dp),
-                contentAlignment = Alignment.Center
+                    .padding(top = 0.dp) // Aligns with the Card's top padding
             ) {
-                Image(
-                    // Note: If you don't have R.drawable.vanda, replace it with a placeholder image
-                    painter = painterResource(id = R.drawable.vanda),
-                    contentDescription = "Profile Image",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .size(120.dp)
-                        .clip(CircleShape)
-                        .background(Color.White)
-                )
+                ProfileImageWithCamera(initialImageUrl = avatarUrl)
             }
         }
     }
 
-    // --- LOGOUT DIALOG COMPOSABLE ---
     if (showLogoutDialog) {
         LogoutDialog(
             onDismiss = { showLogoutDialog = false },
             onConfirm = {
                 showLogoutDialog = false
-                onLogoutConfirmed() // Execute the actual logout function
+                onLogoutConfirmed()
             }
         )
     }
-    // --------------------------------
 }
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ProfileImageWithCamera(initialImageUrl: String?) {
+    val context = LocalContext.current
+    val sheetState = rememberModalBottomSheetState()
+    var imageUri by remember { mutableStateOf<Uri?>(null) }
+    var showOptions by remember { mutableStateOf(false) }
+    var isUploading by remember { mutableStateOf(false) }//is Loading
+
+    val displayImage: Any = when {
+        imageUri != null -> imageUri!!
+        !initialImageUrl.isNullOrEmpty() -> initialImageUrl
+        else -> R.drawable.avatar
+    }
+
+    // 1. Prepare Camera URI
+    val photoUri = remember {
+        val file = File(context.cacheDir, "profile_photo.jpg")
+        FileProvider.getUriForFile(context, "${context.packageName}.provider", file)
+    }
+
+    // Handle Upload Trigger
+    val handleUpload: (Uri) -> Unit = { uri ->
+        isUploading = true
+        uploadImageToServer(context, uri) { success ->
+            isUploading = false
+            if (success) {
+                imageUri = uri
+                Toast.makeText(context, "Upload Successful!", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(context, "Upload Failed", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    // 2. Launchers
+    val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
+        if (success) {
+            showOptions = false
+            handleUpload(photoUri)
+        }
+    }
+
+    val galleryLauncher = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        if (uri != null) {
+            showOptions = false
+            handleUpload(uri)
+        }
+    }
+
+    // 3. Permission Launcher
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            cameraLauncher.launch(photoUri)
+        } else {
+            Toast.makeText(context, "Camera permission denied", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    Box(contentAlignment = Alignment.Center) {
+        Image(
+            painter = rememberAsyncImagePainter(model = displayImage),
+            contentDescription = "Profile",
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .size(120.dp)
+                .clip(CircleShape)
+                .border(2.dp, Color.Black, CircleShape) // Adds a white ring around the image
+        )
+        if (isUploading) {
+            CircularProgressIndicator(
+                modifier = Modifier.align(Alignment.Center),
+                color = Color.Black
+            )
+        }
+
+        // Camera Action Button
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .size(36.dp)
+                .clip(CircleShape)
+                .background(Color.White)
+                .border(1.dp,Color.Black,CircleShape)
+                .clickable { showOptions = true },
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.camera),
+                contentDescription = "Camera",
+                tint = Color.Black,
+                modifier = Modifier.size(20.dp)
+            )
+        }
+    }
+    if (showOptions) {
+        ModalBottomSheet(
+            onDismissRequest = { showOptions = false },
+            sheetState = sheetState,
+            containerColor = Color.White
+        ) {
+            Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+                Text("Edit Profile Picture", style = MaterialTheme.typography.titleLarge)
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+                // Camera Option
+                AttachmentOptionRow(
+                    icon = painterResource(id = R.drawable.camera),
+                    label = "Camera"
+                ) {
+                    // CHECK PERMISSION BEFORE LAUNCHING
+                    val permissionCheckResult = ContextCompat.checkSelfPermission(context, android.Manifest.permission.CAMERA)
+                    if (permissionCheckResult == PackageManager.PERMISSION_GRANTED) {
+                        cameraLauncher.launch(photoUri)
+                    } else {
+                        permissionLauncher.launch(android.Manifest.permission.CAMERA)
+                    }
+                }
+
+                // Gallery Option
+                AttachmentOptionRow(
+                    icon = painterResource(id = R.drawable.photolibrary),
+                    label = "Photo Gallery"
+                ) {
+                    galleryLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                }
+            }
+        }
+    }
+}
+
 
 // --- LOGOUT DIALOG FUNCTION ---
 @Composable
@@ -269,15 +436,6 @@ fun LogoutDialog(onDismiss: () -> Unit, onConfirm: () -> Unit) {
                     style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
                 )
                 Spacer(modifier = Modifier.weight(1f))
-//                IconButton(onClick = onDismiss) {
-//                    // Using a standard close icon (X)
-//                    Icon(
-//                        painter = painterResource(id = R.drawable.absent), // Assuming R.drawable.close_icon exists
-//                        contentDescription = "Close",
-//                        tint = Color.Gray,
-//                        modifier = Modifier.size(24.dp)
-//                    )
-//                }
             }
         },
         text = {
