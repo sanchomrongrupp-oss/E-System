@@ -127,7 +127,7 @@ fun HomeScreen() {
     var studentData by remember { mutableStateOf<StudentMehomeProfile?>(null) }
     var courseList by remember { mutableStateOf<List<CourseItem>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
-    val avatarUrl = remember(studentData) {
+    val avatarUrl = remember(studentData?.avatar) {
         val rawPath = studentData?.avatar
         if (!rawPath.isNullOrEmpty()) {
             val base = Base_Url.BASE_URL.trimEnd('/')
@@ -172,7 +172,9 @@ fun HomeScreen() {
 
             Image(
                 painter = rememberAsyncImagePainter(
-                    model = avatarUrl ?: R.drawable.avatar // Fallback to vanda if URL is null
+                    model = avatarUrl ?: R.drawable.avatar, // Fallback to vanda if URL is null
+                    placeholder = painterResource(id = R.drawable.avatar),
+                    error = painterResource(id = R.drawable.avatar)
                 ),
                     contentDescription = "Profile",
                     modifier = Modifier

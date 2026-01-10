@@ -98,21 +98,26 @@ object RetrofitClientstudentprofile {
 }
 
 fun uploadImageToServer(context: Context, uri: Uri, onComplete: (Boolean) -> Unit) {
-    val contentResolver = context.contentResolver
-    // Create a temp file from the URI
-    val inputStream = contentResolver.openInputStream(uri)
-    val file = File(context.cacheDir, "upload_image.jpg")
-    file.outputStream().use { inputStream?.copyTo(it) }
-
-    val requestFile = file.asRequestBody("image/jpeg".toMediaTypeOrNull())
-    // KEY MUST BE "profile"
-    val body = MultipartBody.Part.createFormData("profile", file.name, requestFile)
-
     CoroutineScope(Dispatchers.IO).launch {
         try {
+            val contentResolver = context.contentResolver
+            val file = File(context.cacheDir, "upload_${System.currentTimeMillis()}.jpg")
+
+            contentResolver.openInputStream(uri)?.use { input ->
+                file.outputStream().use { output ->
+                    input.copyTo(output)
+                }
+            }
+
+            val requestFile = file.asRequestBody("image/jpeg".toMediaTypeOrNull())
+            val body = MultipartBody.Part.createFormData("profile", file.name, requestFile)
+
             val response = RetrofitClientstudentprofile.getClient(context).uploadProfilePicture(body)
+
             withContext(Dispatchers.Main) {
                 onComplete(response.isSuccessful)
+                // Delete temp file after upload
+                if (file.exists()) file.delete()
             }
         } catch (e: Exception) {
             withContext(Dispatchers.Main) {
@@ -293,19 +298,20 @@ fun ProfileScreen(
 fun ProfileImageWithCamera(initialImageUrl: String?) {
     val context = LocalContext.current
     val sheetState = rememberModalBottomSheetState()
-    var imageUri by remember { mutableStateOf<Uri?>(null) }
+
+    var localImageUri by remember { mutableStateOf<Uri?>(null) }
     var showOptions by remember { mutableStateOf(false) }
     var isUploading by remember { mutableStateOf(false) }//is Loading
 
     val displayImage: Any = when {
-        imageUri != null -> imageUri!!
+        localImageUri != null -> localImageUri!!
         !initialImageUrl.isNullOrEmpty() -> initialImageUrl
         else -> R.drawable.avatar
     }
 
     // 1. Prepare Camera URI
     val photoUri = remember {
-        val file = File(context.cacheDir, "profile_photo.jpg")
+        val file = File(context.cacheDir, "temp_profile_${System.currentTimeMillis()}.jpg")
         FileProvider.getUriForFile(context, "${context.packageName}.provider", file)
     }
 
@@ -315,10 +321,10 @@ fun ProfileImageWithCamera(initialImageUrl: String?) {
         uploadImageToServer(context, uri) { success ->
             isUploading = false
             if (success) {
-                imageUri = uri
+                localImageUri = uri
                 Toast.makeText(context, "Upload Successful!", Toast.LENGTH_SHORT).show()
             } else {
-                Toast.makeText(context, "Upload Failed", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Upload Failed Check your connection", Toast.LENGTH_SHORT).show()
             }
         }
     }
